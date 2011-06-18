@@ -6,6 +6,9 @@ typedef struct ExpressionS Expression;
 typedef enum {
 	VALUE,
 	ADD,
+	SUB,
+	MUL,
+	DIV
 } ExpressionType;
 
 typedef enum {
@@ -62,6 +65,27 @@ Expression *create_add_expression(Expression *left, Expression *right) {
 	return expr;
 }
 
+Expression *create_subtract_expression(Expression *left, Expression *right) {
+	Expression *expr = create_expression(SUB);
+	expr->u.pair.left = left;
+	expr->u.pair.right = right;
+	return expr;
+}
+
+Expression *create_multiply_expression(Expression *left, Expression *right) {
+	Expression *expr = create_expression(MUL);
+	expr->u.pair.left = left;
+	expr->u.pair.right = right;
+	return expr;
+}
+
+Expression *create_divide_expression(Expression *left, Expression *right) {
+	Expression *expr = create_expression(DIV);
+	expr->u.pair.left = left;
+	expr->u.pair.right = right;
+	return expr;
+}
+
 Expression *create_double_value_expression(double value) {
 	Expression *expr = create_expression(VALUE);
 	expr->u.value.u.double_value = value;
@@ -71,11 +95,27 @@ Expression *create_double_value_expression(double value) {
 Value *eval(Expression *expression) {
 	switch (expression->type) {
 	case VALUE:
-		return expression->u.value;
+		return &expression->u.value;
 	case ADD:
-		double tmp = eval(expression->u.pair.left)->u.double_value + eval(expression->u.pair.right)->u.double_value;
-		Value *val = create_double_value(tmp);
-		return val;
+		return create_double_value(
+				eval(expression->u.pair.left)->u.double_value +
+				eval(expression->u.pair.right)->u.double_value
+		);
+	case SUB:
+		return create_double_value(
+				eval(expression->u.pair.left)->u.double_value -
+				eval(expression->u.pair.right)->u.double_value
+		);
+	case MUL:
+		return create_double_value(
+				eval(expression->u.pair.left)->u.double_value *
+				eval(expression->u.pair.right)->u.double_value
+		);
+	case DIV:
+		return create_double_value(
+				eval(expression->u.pair.left)->u.double_value /
+				eval(expression->u.pair.right)->u.double_value
+		);
 	}
 }
 		
@@ -85,6 +125,27 @@ int main(void) {
 			create_double_value_expression(2)
 	);
 	Value *val = eval(expr);
+	printf("%lf\n", val->u.double_value);
+
+	expr = create_subtract_expression(
+			create_double_value_expression(1),
+			create_double_value_expression(2)
+	);
+	val = eval(expr);
+	printf("%lf\n", val->u.double_value);
+
+	expr = create_multiply_expression(
+			create_double_value_expression(1),
+			create_double_value_expression(2)
+	);
+	val = eval(expr);
+	printf("%lf\n", val->u.double_value);
+
+	expr = create_divide_expression(
+			create_double_value_expression(1),
+			create_double_value_expression(2)
+	);
+	val = eval(expr);
 	printf("%lf\n", val->u.double_value);
 }
 

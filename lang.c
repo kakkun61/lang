@@ -80,14 +80,6 @@ Value *eval(Expression *expression) {
 }
 		
 int main(void) {
-/*	extern int yyparse(void);
-	extern FILE *yyin;
-
-	yyin = stdin;
-	if (yyparse()) {
-		fprintf(stderr, "Error\n");
-		exit(1);
-	}*/
 	Expression *expr = create_add_expression(
 			create_double_value_expression(1),
 			create_double_value_expression(2)

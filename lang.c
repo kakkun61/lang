@@ -12,13 +12,15 @@ typedef enum {
 } ExpressionType;
 
 typedef enum {
-	DOUBLE,
+	INTEGER,
+	FLOAT,
 } ValueType;
 
 typedef struct {
 	ValueType type;
 	union {
-		double double_value;
+		double float_point;
+		int integer;
 	} u;
 } Value;
 
@@ -35,8 +37,8 @@ typedef struct ExpressionListS {
 struct ExpressionS {
 	ExpressionType type;
 	union {
-		Value value;
-		ExpressionPair pair;
+		Value *value;
+		ExpressionPair *pair;
 	} u;
 };
 
@@ -52,100 +54,159 @@ Value *create_value(ValueType type) {
 	return val;
 }
 
-Value *create_double_value(double value) {
-	Value *val = create_value(DOUBLE);
-	val->u.double_value = value;
+Value *create_float_point(double value) {
+	Value *val = create_value(FLOAT);
+	val->u.float_point = value;
 	return val;
 }
 
-Expression *create_add_expression(Expression *left, Expression *right) {
-	Expression *expr = create_expression(ADD);
-	expr->u.pair.left = left;
-	expr->u.pair.right = right;
+Value *create_integer(int value) {
+	Value *val = create_value(INTEGER);
+	val->u.integer = value;
+	return val;
+}
+
+ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
+	ExpressionPair *pair = malloc(sizeof(ExpressionPair));
+	pair->left = left;
+	pair->right = right;
+	return pair;
+}
+
+Expression *create_binary_expression(ExpressionType type, Expression *left, Expression *right) {
+	Expression *expr = create_expression(type);
+	expr->u.pair = create_expression_pair(left, right);
 	return expr;
 }
 
-Expression *create_subtract_expression(Expression *left, Expression *right) {
-	Expression *expr = create_expression(SUB);
-	expr->u.pair.left = left;
-	expr->u.pair.right = right;
-	return expr;
-}
-
-Expression *create_multiply_expression(Expression *left, Expression *right) {
-	Expression *expr = create_expression(MUL);
-	expr->u.pair.left = left;
-	expr->u.pair.right = right;
-	return expr;
-}
-
-Expression *create_divide_expression(Expression *left, Expression *right) {
-	Expression *expr = create_expression(DIV);
-	expr->u.pair.left = left;
-	expr->u.pair.right = right;
-	return expr;
-}
-
-Expression *create_double_value_expression(double value) {
+Expression *create_value_expression(Value *value) {
 	Expression *expr = create_expression(VALUE);
-	expr->u.value.u.double_value = value;
+	expr->u.value = value;
 	return expr;
 }
+
+#define BINEXP2(op, left, right) ((left) op (right))
+#define BINEXP(op, left, right)\
+	switch ((left)->type) {\
+	case FLOAT:\
+		switch ((right)->type) {\
+		case FLOAT:\
+			return create_float_point(\
+					BINEXP2(op, (left)->u.float_point, (right)->u.float_point)\
+			);\
+		case INTEGER:\
+			return create_float_point(\
+					BINEXP2(op, (left)->u.float_point, (right)->u.integer)\
+			);\
+		}\
+	case INTEGER:\
+		switch ((right)->type) {\
+		case FLOAT:\
+			return create_float_point(\
+					BINEXP2(op, (left)->u.integer, (right)->u.float_point)\
+			);\
+		case INTEGER:\
+			return create_integer(\
+					BINEXP2(op, (left)->u.integer, (right)->u.integer)\
+			);\
+		}\
+	}
 
 Value *eval(Expression *expression) {
 	switch (expression->type) {
 	case VALUE:
-		return &expression->u.value;
+		return expression->u.value;
 	case ADD:
-		return create_double_value(
-				eval(expression->u.pair.left)->u.double_value +
-				eval(expression->u.pair.right)->u.double_value
-		);
 	case SUB:
-		return create_double_value(
-				eval(expression->u.pair.left)->u.double_value -
-				eval(expression->u.pair.right)->u.double_value
-		);
 	case MUL:
-		return create_double_value(
-				eval(expression->u.pair.left)->u.double_value *
-				eval(expression->u.pair.right)->u.double_value
-		);
 	case DIV:
-		return create_double_value(
-				eval(expression->u.pair.left)->u.double_value /
-				eval(expression->u.pair.right)->u.double_value
-		);
+		{
+			Value *left = eval(expression->u.pair->left);
+			Value *right = eval(expression->u.pair->right);
+			switch (expression->type) {
+			case ADD:
+				BINEXP(+, left, right);
+			case SUB:
+				BINEXP(-, left, right);
+			case MUL:
+				BINEXP(*, left, right);
+			case DIV:
+				BINEXP(/, left, right);
+			}
+		}
 	}
 }
-		
+
+#undef BINEXP2
+#undef BINEXP
+
 int main(void) {
-	Expression *expr = create_add_expression(
-			create_double_value_expression(1),
-			create_double_value_expression(2)
+	// float
+	Expression *expr = create_binary_expression(
+			ADD,
+			create_value_expression(create_float_point(1)),
+			create_value_expression(create_float_point(2))
 	);
 	Value *val = eval(expr);
-	printf("%lf\n", val->u.double_value);
+	printf("%lf\n", val->u.float_point);
 
-	expr = create_subtract_expression(
-			create_double_value_expression(1),
-			create_double_value_expression(2)
+	expr = create_binary_expression(
+			SUB,
+			create_value_expression(create_float_point(1)),
+			create_value_expression(create_float_point(2))
 	);
 	val = eval(expr);
-	printf("%lf\n", val->u.double_value);
+	printf("%lf\n", val->u.float_point);
 
-	expr = create_multiply_expression(
-			create_double_value_expression(1),
-			create_double_value_expression(2)
+	expr = create_binary_expression(
+			MUL,
+			create_value_expression(create_float_point(1)),
+			create_value_expression(create_float_point(2))
 	);
 	val = eval(expr);
-	printf("%lf\n", val->u.double_value);
+	printf("%lf\n", val->u.float_point);
 
-	expr = create_divide_expression(
-			create_double_value_expression(1),
-			create_double_value_expression(2)
+	expr = create_binary_expression(
+			DIV,
+			create_value_expression(create_float_point(1)),
+			create_value_expression(create_float_point(2))
 	);
 	val = eval(expr);
-	printf("%lf\n", val->u.double_value);
+	printf("%lf\n", val->u.float_point);
+
+	// int
+	expr = create_binary_expression(
+			ADD,
+			create_value_expression(create_integer(1)),
+			create_value_expression(create_integer(2))
+	);
+	val = eval(expr);
+	printf("%d\n", val->u.integer);
+
+	expr = create_binary_expression(
+			SUB,
+			create_value_expression(create_integer(1)),
+			create_value_expression(create_integer(2))
+	);
+	val = eval(expr);
+	printf("%d\n", val->u.integer);
+
+	expr = create_binary_expression(
+			MUL,
+			create_value_expression(create_integer(1)),
+			create_value_expression(create_integer(2))
+	);
+	val = eval(expr);
+	printf("%d\n", val->u.integer);
+
+	expr = create_binary_expression(
+			DIV,
+			create_value_expression(create_integer(1)),
+			create_value_expression(create_integer(2))
+	);
+	val = eval(expr);
+	printf("%d\n", val->u.integer);
+
+	return 0;
 }
 

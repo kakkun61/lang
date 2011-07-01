@@ -3,7 +3,7 @@
 #include "lang.h"
 
 int main(void) {
-	// float
+	/*// float
 	Expression *expr = create_binary_expression(
 			ADD,
 			create_value_expression(create_float_point(1)),
@@ -67,8 +67,20 @@ int main(void) {
 			create_value_expression(create_integer(2))
 	);
 	val = eval(expr);
-	printf("%d\n", val->u.integer);
+	printf("%d\n", val->u.integer);*/
 
+	set_compile_script(create_script());
+	add_expression(create_binary_expression(
+			DIV,
+			create_value_expression(create_integer(1)),
+			create_value_expression(create_integer(2))
+	));
+	add_expression(create_binary_expression(
+			MUL,
+			create_value_expression(create_float_point(1.3)),
+			create_value_expression(create_float_point(0.2))
+	));
+	interpret(get_compile_script());
 	return 0;
 }
 

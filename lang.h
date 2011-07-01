@@ -1,6 +1,11 @@
 #ifndef LANG
 #define LANG
-	
+
+#include <stdio.h>
+#include "debug.h"
+
+//#define DEBUG
+
 typedef struct ExpressionS Expression;
 
 typedef enum {
@@ -29,11 +34,6 @@ typedef struct ExpressionPairS {
 	Expression *right;
 } ExpressionPair;
 
-typedef struct ExpressionListS {
-	Expression *expression;
-	struct ExpressionListS *next;
-} ExpressionList;
-
 struct ExpressionS {
 	ExpressionType type;
 	union {
@@ -41,6 +41,15 @@ struct ExpressionS {
 		ExpressionPair *pair;
 	} u;
 };
+
+typedef struct ExpressionListS {
+	Expression *expression;
+	struct ExpressionListS *next;
+} ExpressionList;
+
+typedef struct {
+	ExpressionList *expression_list;
+} Script;
 
 Expression *create_expression(ExpressionType type) {
 	Expression *expr = malloc(sizeof(Expression));
@@ -85,29 +94,28 @@ Expression *create_value_expression(Value *value) {
 	return expr;
 }
 
-#define BINEXP2(op, left, right) ((left) op (right))
 #define BINEXP(op, left, right)\
 	switch ((left)->type) {\
 	case FLOAT:\
 		switch ((right)->type) {\
 		case FLOAT:\
 			return create_float_point(\
-					BINEXP2(op, (left)->u.float_point, (right)->u.float_point)\
+					(left)->u.float_point op (right)->u.float_point\
 			);\
 		case INTEGER:\
 			return create_float_point(\
-					BINEXP2(op, (left)->u.float_point, (right)->u.integer)\
+					(left)->u.float_point op (right)->u.integer\
 			);\
 		}\
 	case INTEGER:\
 		switch ((right)->type) {\
 		case FLOAT:\
 			return create_float_point(\
-					BINEXP2(op, (left)->u.integer, (right)->u.float_point)\
+					(left)->u.integer op (right)->u.float_point\
 			);\
 		case INTEGER:\
 			return create_integer(\
-					BINEXP2(op, (left)->u.integer, (right)->u.integer)\
+					(left)->u.integer op (right)->u.integer\
 			);\
 		}\
 	}
@@ -137,7 +145,59 @@ Value *eval(Expression *expression) {
 	}
 }
 
-#undef BINEXP2
 #undef BINEXP
+
+void print_value(Value *value) {
+	#ifdef DEBUG
+	d("print_value");
+	#endif
+	switch (value->type) {
+	case INTEGER:
+		printf("%d\n", value->u.integer);
+		break;
+	case FLOAT:
+		printf("%lf\n", value->u.float_point);
+		break;
+	}
+}
+
+static Script *compile_script;
+
+void set_compile_script(Script *script) {
+	compile_script = script;
+}
+
+Script *get_compile_script() {
+	return compile_script;
+}
+
+Script *create_script() {
+	Script *script = malloc(sizeof(Script));
+	script->expression_list = NULL;
+	return script;
+}
+
+void add_expression(Expression *expression) {
+	ExpressionList *el, *crt;
+	crt = malloc(sizeof(ExpressionList));
+	crt->expression = expression;
+	crt->next = NULL;
+	if (compile_script->expression_list) {
+		for (el = compile_script->expression_list; el->next; el = el->next);
+		el->next = crt;
+	} else {
+		compile_script->expression_list = crt;
+	}
+}
+
+void interpret(Script *script) {
+	ExpressionList *el;
+	#ifdef DEBUG
+	d("interpret");
+	#endif
+	for (el = script->expression_list; el; el = el->next) {
+		print_value(eval(el->expression));
+	}
+}
 
 #endif

@@ -17,10 +17,7 @@ int main(int argc, char **argv) {
 
 	set_compile_script(create_script());
 
-	if (compile(input)) {
-		fprintf(stderr, "Error.\n");
-		return 1;
-	}
+	compile(input);
 
 	if (input != stdin) {
 		if (EOF == fclose(input)) {

@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lang.h"
+
+#ifdef DEBUG
+#	include "debug.h"
+#endif
+
 #define YYDEBUG 1
 %}
 %union {
@@ -15,10 +20,22 @@
 %type <expression> expression additive_expression multiplicative_expression unary_expression primary_expression
 %%
 line_list:
-	line
-	| line_list line;
+	line {
+		#ifdef DEBUG
+		d("line_list: line");
+		#endif
+	}
+	| line_list line {
+		#ifdef DEBUG
+		d("line_list: line_list line");
+		#endif
+	};
 line:
-	expression CR {
+	CR
+	| expression CR {
+		#ifdef DEBUG
+		d("line: expression CR");
+		#endif
 		add_expression($1);
 	};
 expression:

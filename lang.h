@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-typedef struct ExpressionS Expression;
+typedef struct Expression_tag Expression;
 
 typedef enum {
 	VALUE,
@@ -26,12 +26,12 @@ typedef struct {
 	} u;
 } Value;
 
-typedef struct ExpressionPairS {
+typedef struct ExpressionPair_tag {
 	Expression *left;
 	Expression *right;
 } ExpressionPair;
 
-struct ExpressionS {
+struct Expression_tag {
 	ExpressionType type;
 	union {
 		Value *value;
@@ -39,9 +39,9 @@ struct ExpressionS {
 	} u;
 };
 
-typedef struct ExpressionListS {
+typedef struct ExpressionList_tag {
 	Expression *expression;
-	struct ExpressionListS *next;
+	struct ExpressionList_tag *next;
 } ExpressionList;
 
 typedef struct {

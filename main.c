@@ -19,9 +19,6 @@ int main(int argc, char **argv) {
 	} else {
 		fprintf(stderr, "Bad call.\n");
 	}
-	#ifdef DEBUG
-	d("open file");
-	#endif
 
 	set_compile_script(create_script());
 

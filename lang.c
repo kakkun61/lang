@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "lang.h"
 
 #ifdef DEBUG
@@ -85,6 +86,17 @@ Expression *create_assign_expression(char *variable_name, Expression *operand) {
 	return expr;
 }
 
+char *create_identifier(char *identifier)
+{
+    char *new_id;
+
+    new_id = malloc(strlen(identifier) + 1);
+
+    strcpy(new_id, identifier);
+
+    return new_id;
+}
+
 #define BINEXP(op, left, right)\
 	({\
 		Value *tmp;\
@@ -95,27 +107,36 @@ Expression *create_assign_expression(char *variable_name, Expression *operand) {
 				tmp = create_float_point(\
 						(left)->u.float_point op (right)->u.float_point\
 				);\
+				break;\
 			case INTEGER:\
 				tmp = create_float_point(\
 						(left)->u.float_point op (right)->u.integer\
 				);\
+				break;\
 			}\
+			break;\
 		case INTEGER:\
 			switch ((right)->type) {\
 			case FLOAT:\
 				tmp = create_float_point(\
 						(left)->u.integer op (right)->u.float_point\
 				);\
+				break;\
 			case INTEGER:\
 				tmp = create_integer(\
 						(left)->u.integer op (right)->u.integer\
 				);\
+				break;\
 			}\
+			break;\
 		}\
 		tmp;\
 	})
 
 Value *eval(Expression *expression) {
+	#ifdef DEBUG
+	d("eval");
+	#endif
 	switch (expression->type) {
 	case VALUE:
 		return expression->u.value;
@@ -137,21 +158,20 @@ Value *eval(Expression *expression) {
 				return BINEXP(/, left, right);
 			}
 		}
+	case ASSIGN: // TODO
+		return eval(expression->u.assign->operand);
 	}
 }
 
 #undef BINEXP
 
-void print_value(Value *value) {
-	#ifdef DEBUG
-	d("print_value");
-	#endif
+int value2string(char *string, size_t size, const Value *value) {
 	switch (value->type) {
 	case INTEGER:
-		printf("%d\n", value->u.integer);
+		return snprintf(string, size, "%d", value->u.integer);
 		break;
 	case FLOAT:
-		printf("%lf\n", value->u.float_point);
+		return snprintf(string, size, "%lf", value->u.float_point);
 		break;
 	}
 }
@@ -190,8 +210,10 @@ void interpret(Script *script) {
 	d("interpret");
 	#endif
 	ExpressionList *el;
+	char str[80];
 	for (el = script->expression_list; el; el = el->next) {
-		print_value(eval(el->expression));
+		value2string(str, sizeof(str), eval(el->expression));
+		printf("%s\n", str);
 	}
 }
 

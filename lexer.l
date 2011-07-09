@@ -15,6 +15,7 @@ int yywrap(void) {
 "\n" return CR;
 "(" return LP;
 ")" return RP;
+"=" return ASSIGN_TOKEN;
 ([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);
@@ -26,6 +27,10 @@ int yywrap(void) {
 	sscanf(yytext, "%lf", &temp);
 	yylval.float_point = temp;
 	return FLOAT_POINT_LITERAL;
+}
+[A-Za-z_][A-Za-z_0-9]* {
+    yylval.identifier = create_identifier(yytext);
+    return IDENTIFIER;
 }
 [ \t] ;
 . {

@@ -12,34 +12,28 @@
 %union {
 	int integer;
 	double float_point;
+	char *identifier;
 	Expression *expression;
 }
 %token <integer> INTEGER_LITERAL
 %token <float_point> FLOAT_POINT_LITERAL
-%token ADD_TOKEN SUB_TOKEN MUL_TOKEN DIV_TOKEN CR LP RP
+%token <identifier> IDENTIFIER
+%token ADD_TOKEN SUB_TOKEN MUL_TOKEN DIV_TOKEN CR LP RP ASSIGN_TOKEN
 %type <expression> expression additive_expression multiplicative_expression unary_expression primary_expression
 %%
 line_list:
-	line {
-		#ifdef DEBUG
-		d("line_list: line");
-		#endif
-	}
-	| line_list line {
-		#ifdef DEBUG
-		d("line_list: line_list line");
-		#endif
-	};
+	line
+	| line_list line;
 line:
 	CR
 	| expression CR {
-		#ifdef DEBUG
-		d("line: expression CR");
-		#endif
 		add_expression($1);
 	};
 expression:
-	additive_expression;
+	additive_expression
+	| IDENTIFIER ASSIGN_TOKEN expression {
+		$$ = create_assign_expression($1, $3);
+	};
 additive_expression:
 	multiplicative_expression
 	| additive_expression ADD_TOKEN multiplicative_expression {

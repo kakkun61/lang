@@ -72,6 +72,8 @@ Expression *create_value_expression(Value *value);
 
 Expression *create_assign_expression(char *variable_name, Expression *operand);
 
+char *create_identifier(char *identifier);
+
 Value *eval(Expression *expression);
 
 void print_value(Value *value);

@@ -2,8 +2,13 @@
 #include <stdlib.h>
 #include "lang.h"
 
+#ifdef DEBUG
+# include "debug.h"
+#endif
+
 int main(int argc, char **argv) {
 	FILE *input;
+
 	if (argc == 1) input = stdin;
 	else if (argc == 2) {
 		input = fopen(argv[1], "r");
@@ -14,6 +19,9 @@ int main(int argc, char **argv) {
 	} else {
 		fprintf(stderr, "Bad call.\n");
 	}
+	#ifdef DEBUG
+	d("open file");
+	#endif
 
 	set_compile_script(create_script());
 

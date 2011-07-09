@@ -7,30 +7,49 @@
 #endif
 
 Expression *create_expression(ExpressionType type) {
+	#ifdef DEBUG
+	d("create_expression");
+	#endif
 	Expression *expr = malloc(sizeof(Expression));
+	if (!expr) {
+		fprintf(stderr, "Memory allocation error\n");
+		exit(1);
+	}
 	expr->type = type;
 	return expr;
 }
 
 Value *create_value(ValueType type) {
+	#ifdef DEBUG
+	d("create_value");
+	#endif
 	Value *val = malloc(sizeof(Value));
 	val->type = type;
 	return val;
 }
 
 Value *create_float_point(double value) {
+	#ifdef DEBUG
+	d("create_float_point(%lf)", value);
+	#endif
 	Value *val = create_value(FLOAT);
 	val->u.float_point = value;
 	return val;
 }
 
 Value *create_integer(int value) {
+	#ifdef DEBUG
+	d("create_integer(%d)", value);
+	#endif
 	Value *val = create_value(INTEGER);
 	val->u.integer = value;
 	return val;
 }
 
 ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
+	#ifdef DEBUG
+	d("create_expression_pair");
+	#endif
 	ExpressionPair *pair = malloc(sizeof(ExpressionPair));
 	pair->left = left;
 	pair->right = right;
@@ -38,42 +57,63 @@ ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
 }
 
 Expression *create_binary_expression(ExpressionType type, Expression *left, Expression *right) {
+	#ifdef DEBUG
+	d("create_binary_expression");
+	#endif
 	Expression *expr = create_expression(type);
 	expr->u.pair = create_expression_pair(left, right);
 	return expr;
 }
 
 Expression *create_value_expression(Value *value) {
+	#ifdef DEBUG
+	d("create_value_expression");
+	#endif
 	Expression *expr = create_expression(VALUE);
 	expr->u.value = value;
 	return expr;
 }
 
+Expression *create_assign_expression(char *variable_name, Expression *operand) {
+	#ifdef DEBUG
+	d("create_assign_expression");
+	#endif
+	Expression *expr = create_expression(ASSIGN);
+	expr->u.assign = malloc(sizeof(Assign));
+	expr->u.assign->variable_name = variable_name;
+	expr->u.assign->operand = operand;
+	return expr;
+}
+
 #define BINEXP(op, left, right)\
-	switch ((left)->type) {\
-	case FLOAT:\
-		switch ((right)->type) {\
+	({\
+		Value *tmp;\
+		switch ((left)->type) {\
 		case FLOAT:\
-			return create_float_point(\
-					(left)->u.float_point op (right)->u.float_point\
-			);\
+			switch ((right)->type) {\
+			case FLOAT:\
+				tmp = create_float_point(\
+						(left)->u.float_point op (right)->u.float_point\
+				);\
+			case INTEGER:\
+				tmp = create_float_point(\
+						(left)->u.float_point op (right)->u.integer\
+				);\
+			}\
 		case INTEGER:\
-			return create_float_point(\
-					(left)->u.float_point op (right)->u.integer\
-			);\
+			switch ((right)->type) {\
+			case FLOAT:\
+				tmp = create_float_point(\
+						(left)->u.integer op (right)->u.float_point\
+				);\
+			case INTEGER:\
+				tmp = create_integer(\
+						(left)->u.integer op (right)->u.integer\
+				);\
+			}\
 		}\
-	case INTEGER:\
-		switch ((right)->type) {\
-		case FLOAT:\
-			return create_float_point(\
-					(left)->u.integer op (right)->u.float_point\
-			);\
-		case INTEGER:\
-			return create_integer(\
-					(left)->u.integer op (right)->u.integer\
-			);\
-		}\
-	}
+		tmp;\
+	})
 
 Value *eval(Expression *expression) {
 	switch (expression->type) {
@@ -88,13 +128,13 @@ Value *eval(Expression *expression) {
 			Value *right = eval(expression->u.pair->right);
 			switch (expression->type) {
 			case ADD:
-				BINEXP(+, left, right);
+				return BINEXP(+, left, right);
 			case SUB:
-				BINEXP(-, left, right);
+				return BINEXP(-, left, right);
 			case MUL:
-				BINEXP(*, left, right);
+				return BINEXP(*, left, right);
 			case DIV:
-				BINEXP(/, left, right);
+				return BINEXP(/, left, right);
 			}
 		}
 	}
@@ -146,10 +186,10 @@ void add_expression(Expression *expression) {
 }
 
 void interpret(Script *script) {
-	ExpressionList *el;
 	#ifdef DEBUG
 	d("interpret");
 	#endif
+	ExpressionList *el;
 	for (el = script->expression_list; el; el = el->next) {
 		print_value(eval(el->expression));
 	}

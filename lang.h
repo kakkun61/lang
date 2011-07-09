@@ -10,7 +10,8 @@ typedef enum {
 	ADD,
 	SUB,
 	MUL,
-	DIV
+	DIV,
+	ASSIGN,
 } ExpressionType;
 
 typedef enum {
@@ -31,11 +32,17 @@ typedef struct ExpressionPair_tag {
 	Expression *right;
 } ExpressionPair;
 
+typedef struct {
+	char *variable_name;
+	Expression *operand;
+} Assign;
+
 struct Expression_tag {
 	ExpressionType type;
 	union {
 		Value *value;
 		ExpressionPair *pair;
+		Assign *assign;
 	} u;
 };
 
@@ -62,6 +69,8 @@ ExpressionPair *create_expression_pair(Expression *left, Expression *right);
 Expression *create_binary_expression(ExpressionType type, Expression *left, Expression *right);
 
 Expression *create_value_expression(Value *value);
+
+Expression *create_assign_expression(char *variable_name, Expression *operand);
 
 Value *eval(Expression *expression);
 

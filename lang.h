@@ -12,6 +12,7 @@ typedef enum {
 	MUL,
 	DIV,
 	ASSIGN,
+	IDENTIFIER,
 } ExpressionType;
 
 typedef enum {
@@ -43,6 +44,7 @@ struct Expression_tag {
 		Value *value;
 		ExpressionPair *pair;
 		Assign *assign;
+		char *identifier;
 	} u;
 };
 
@@ -50,9 +52,20 @@ typedef struct ExpressionList_tag {
 	Expression *expression;
 	struct ExpressionList_tag *next;
 } ExpressionList;
+ 
+ typedef struct {
+	char *name;
+	Value *value;
+} Variable;
+
+typedef struct VariableList_tag {
+	Variable *variable;
+	struct VariableList_tag *next;
+} VariableList;
 
 typedef struct {
 	ExpressionList *expression_list;
+	VariableList *variable_list;
 } Script;
 
 /* lang.c */
@@ -74,6 +87,8 @@ Expression *create_assign_expression(char *variable_name, Expression *operand);
 
 char *create_identifier(char *identifier);
 
+Expression *create_identifier_expression(char *identifier);
+
 Value *eval(Expression *expression);
 
 void print_value(Value *value);
@@ -81,6 +96,10 @@ void print_value(Value *value);
 void set_compile_script(Script *script);
 
 Script *get_compile_script();
+
+void add_variable(Variable *variable);
+
+Variable *get_variable(char *name);
 
 Script *create_script();
 

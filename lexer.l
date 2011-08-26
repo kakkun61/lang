@@ -30,7 +30,7 @@ int yywrap(void) {
 }
 [A-Za-z_][A-Za-z_0-9]* {
     yylval.identifier = create_identifier(yytext);
-    return IDENTIFIER;
+    return IDENTIFIER_TOKEN;
 }
 [ \t] ;
 . {

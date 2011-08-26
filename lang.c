@@ -86,15 +86,16 @@ Expression *create_assign_expression(char *variable_name, Expression *operand) {
 	return expr;
 }
 
-char *create_identifier(char *identifier)
-{
+char *create_identifier(char *identifier) {
     char *new_id;
-
-    new_id = malloc(strlen(identifier) + 1);
-
+    new_id = malloc(strlen(identifier) + sizeof('\0'));
     strcpy(new_id, identifier);
-
     return new_id;
+}
+
+Expression *create_identifier_expression(char *identifier) {
+	Expression *expr = create_expression(IDENTIFIER);
+	expr->u.identifier = identifier;
 }
 
 #define BINEXP(op, left, right)\
@@ -158,8 +159,22 @@ Value *eval(Expression *expression) {
 				return BINEXP(/, left, right);
 			}
 		}
-	case ASSIGN: // TODO
-		return eval(expression->u.assign->operand);
+	case ASSIGN:
+		{
+			char *name;
+			Variable *var;
+			name = expression->u.assign->variable_name;
+			var = get_variable(name);
+			if (!var) {
+				var = malloc(sizeof(Variable));
+				var->name = name;
+				add_variable(var);
+			}
+			var->value = eval(expression->u.assign->operand);
+			return var->value;
+		}
+	case IDENTIFIER:
+		return get_variable(expression->u.identifier)->value;
 	}
 }
 
@@ -203,6 +218,31 @@ void add_expression(Expression *expression) {
 	} else {
 		compile_script->expression_list = crt;
 	}
+}
+
+void add_variable(Variable *variable) {
+	VariableList *crt, *vl;
+	crt = malloc(sizeof(VariableList));
+	crt->variable = variable;
+	crt->next = NULL;
+	if (compile_script->variable_list) {
+		for (vl = compile_script->variable_list; vl->next; vl = vl->next);
+		vl->next = crt;
+	} else {
+		compile_script->variable_list = crt;
+	}
+}
+
+Variable *get_variable(char *name) {
+	VariableList *vl;
+	if (compile_script->variable_list) {
+		for (vl = compile_script->variable_list; vl; vl = vl->next) {
+			if (!strcmp(vl->variable->name, name)) {
+				return vl->variable;
+			}
+		}
+	}
+	return NULL;
 }
 
 void interpret(Script *script) {

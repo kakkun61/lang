@@ -23,7 +23,7 @@ int yywrap(void) {
 	yylval.integer = temp;
 	return INTEGER_LITERAL;
 }
-([1-9][0-9]*\.[0-9])|([0-9]\.[0-9]*) {
+([1-9][0-9]*\.[0-9]+)|([0-9]\.[0-9]+) {
 	double temp;
 	sscanf(yytext, "%lf", &temp);
 	yylval.float_point = temp;

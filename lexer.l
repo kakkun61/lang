@@ -12,10 +12,11 @@ int yywrap(void) {
 "-" return SUB_TOKEN;
 "*" return MUL_TOKEN;
 "/" return DIV_TOKEN;
-"\n" return CR;
 "(" return LP;
 ")" return RP;
 "=" return ASSIGN_TOKEN;
+"," return COMMA;
+"." return DOT;
 ([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);
@@ -32,7 +33,7 @@ int yywrap(void) {
     yylval.identifier = create_identifier(yytext);
     return IDENTIFIER_TOKEN;
 }
-[ \t] ;
+[ \t\n] ;
 . {
 	fprintf(stderr, "Lexical error: \"%s\"\n", yytext);
 	exit(1);

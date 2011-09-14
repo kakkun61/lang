@@ -20,16 +20,53 @@ int yyerror(char const *str);
 %token <integer> INTEGER_LITERAL
 %token <float_point> FLOAT_POINT_LITERAL
 %token <identifier> IDENTIFIER_TOKEN
-%token ADD_TOKEN SUB_TOKEN MUL_TOKEN DIV_TOKEN CR LP RP ASSIGN_TOKEN
-%type <expression> expression additive_expression multiplicative_expression unary_expression primary_expression
+%token ADD_TOKEN
+       SUB_TOKEN
+       MUL_TOKEN
+       DIV_TOKEN
+       LP
+       RP
+       ASSIGN_TOKEN
+       COMMA
+       DOT
+%type <expression> expression
+                   additive_expression
+                   multiplicative_expression
+                   unary_expression
+                   primary_expression
 %%
-line_list:
-	line
-	| line_list line;
-line:
-	CR
-	| expression CR {
-		add_expression($1);
+root_expression:
+	expression {
+		#ifdef DEBUG
+			d("root_expression: expression");
+		#endif
+	}
+	| block {
+		#ifdef DEBUG
+			d("root_expression: block");
+		#endif
+	};
+block:
+	expression DOT {
+		#ifdef DEBUG
+			d("block: expression DOT");
+		#endif
+	}
+	| expression_list expression DOT {
+		#ifdef DEBUG
+			d("block: expression_list expression DOT");
+		#endif
+	};
+expression_list:
+	expression COMMA {
+		#ifdef DEBUG
+			d("expression_list: expression COMMA");
+		#endif
+	}
+	| expression_list expression {
+		#ifdef DEBUG
+			d("expression_list: expression_list expression");
+		#endif
 	};
 expression:
 	additive_expression
@@ -56,6 +93,9 @@ unary_expression:
 	primary_expression;
 primary_expression:
 	INTEGER_LITERAL {
+		#ifdef DEBUG
+			d("primary_expression: INTEGER_LITERAL");
+		#endif
 		$$ = create_value_expression(create_integer($1));
 	}
 	| FLOAT_POINT_LITERAL {

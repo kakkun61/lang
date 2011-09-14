@@ -5,6 +5,8 @@
 
 typedef struct Expression_tag Expression;
 
+typedef struct Function_tag Function; 
+
 typedef enum {
 	VALUE,
 	ADD,
@@ -13,11 +15,13 @@ typedef enum {
 	DIV,
 	ASSIGN,
 	IDENTIFIER,
+	FUNCTION_CALL,
 } ExpressionType;
 
 typedef enum {
 	INTEGER,
 	FLOAT,
+	FUNCTION,
 } ValueType;
 
 typedef struct {
@@ -25,6 +29,7 @@ typedef struct {
 	union {
 		double float_point;
 		int integer;
+		Function *function;
 	} u;
 } Value;
 
@@ -52,8 +57,30 @@ typedef struct ExpressionList_tag {
 	Expression *expression;
 	struct ExpressionList_tag *next;
 } ExpressionList;
- 
- typedef struct {
+
+typedef enum {
+	FOREIGN_FUNCTION,
+	NATIVE_FUNCTION,
+} FunctionType;
+
+typedef struct ParameterList_tag {
+	char *name;
+	struct ParameterList_tag *next;
+} ParameterList;
+
+struct Function_tag {
+	FunctionType type;
+	union {
+		struct {
+			ParameterList *parameter_list;
+			ExpressionList *sexpression_list;
+		} foreign;
+		struct {
+		} native;
+	} u;
+};
+
+typedef struct {
 	char *name;
 	Value *value;
 } Variable;

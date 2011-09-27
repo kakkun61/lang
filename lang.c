@@ -4,11 +4,14 @@
 #include "lang.h"
 
 #ifdef DEBUG
+#	define DEBUG_LANG
 #	include "debug.h"
 #endif
 
+int value2string(char *string, size_t size, const Value *value);
+
 Expression *create_expression(ExpressionType type) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_expression");
 	#endif
 	Expression *expr = malloc(sizeof(Expression));
@@ -21,7 +24,7 @@ Expression *create_expression(ExpressionType type) {
 }
 
 Value *create_value(ValueType type) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_value");
 	#endif
 	Value *val = malloc(sizeof(Value));
@@ -30,7 +33,7 @@ Value *create_value(ValueType type) {
 }
 
 Value *create_float_point(double value) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_float_point(%lf)", value);
 	#endif
 	Value *val = create_value(FLOAT);
@@ -39,7 +42,7 @@ Value *create_float_point(double value) {
 }
 
 Value *create_integer(int value) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_integer(%d)", value);
 	#endif
 	Value *val = create_value(INTEGER);
@@ -48,7 +51,7 @@ Value *create_integer(int value) {
 }
 
 ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_expression_pair");
 	#endif
 	ExpressionPair *pair = malloc(sizeof(ExpressionPair));
@@ -58,7 +61,7 @@ ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
 }
 
 Expression *create_binary_expression(ExpressionType type, Expression *left, Expression *right) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_binary_expression");
 	#endif
 	Expression *expr = create_expression(type);
@@ -67,7 +70,7 @@ Expression *create_binary_expression(ExpressionType type, Expression *left, Expr
 }
 
 Expression *create_value_expression(Value *value) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_value_expression");
 	#endif
 	Expression *expr = create_expression(VALUE);
@@ -76,7 +79,7 @@ Expression *create_value_expression(Value *value) {
 }
 
 Expression *create_assign_expression(char *variable_name, Expression *operand) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("create_assign_expression");
 	#endif
 	Expression *expr = create_expression(ASSIGN);
@@ -135,8 +138,14 @@ Expression *create_identifier_expression(char *identifier) {
 	})
 
 Value *eval(Expression *expression) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("eval");
+	#endif
+	#ifdef DEBUG
+	if (!expression) {
+		d("expression == NULL");
+		exit(1);
+	}
 	#endif
 	switch (expression->type) {
 	case VALUE:
@@ -175,12 +184,42 @@ Value *eval(Expression *expression) {
 		}
 	case IDENTIFIER:
 		return get_variable(expression->u.identifier)->value;
+	case BLOCK:
+		{
+			ExpressionList *el;
+			Value *val;
+			#ifdef DEBUG_LANG
+				char str[80];
+				d("eval BLOCK");
+				if (!expression->u.expression_list) { // => true
+					d("!expression->u.expression_list");
+					exit(1);
+				}
+			#endif
+			for (el = expression->u.expression_list; el; el = el->next) {
+				#ifdef DEBUG_LANG
+					if (el->expression == NULL) {
+						d("el->expression == NULL");
+						exit(1);
+					}
+				#endif
+				val = eval(el->expression);
+				#ifdef DEBUG_LANG
+					value2string(str, sizeof(str), val);
+					d(str);
+				#endif
+			}
+			return val;
+		}
+	default:
+		fprintf(stderr, "bad expression type\n");
+		exit(1);
 	}
 }
 
 #undef BINEXP
 
-int value2string(char *string, size_t size, const Value *value) {
+int value2string(char *string, size_t size, const Value *value) { // SEGV
 	switch (value->type) {
 	case INTEGER:
 		return snprintf(string, size, "%d", value->u.integer);
@@ -188,6 +227,9 @@ int value2string(char *string, size_t size, const Value *value) {
 	case FLOAT:
 		return snprintf(string, size, "%lf", value->u.float_point);
 		break;
+	default:
+		fprintf(stderr, "bad value type\n");
+		exit(1);
 	}
 }
 
@@ -203,21 +245,41 @@ Script *get_compile_script() {
 
 Script *create_script() {
 	Script *script = malloc(sizeof(Script));
-	script->expression_list = NULL;
+	script->expression = NULL;
 	return script;
 }
 
-void add_expression(Expression *expression) {
-	ExpressionList *el, *crt;
-	crt = malloc(sizeof(ExpressionList));
-	crt->expression = expression;
-	crt->next = NULL;
-	if (compile_script->expression_list) {
-		for (el = compile_script->expression_list; el->next; el = el->next);
-		el->next = crt;
-	} else {
-		compile_script->expression_list = crt;
-	}
+ExpressionList *create_expression_list(Expression *expression) {
+	ExpressionList *el;
+	#ifdef DEBUG_LANG
+		d("create_expression_list");
+	#endif
+	el = malloc(sizeof(ExpressionList));
+	el->expression = expression;
+	el->next = NULL;
+	return el;
+}
+
+void add_expression(ExpressionList *expression_list, Expression *expression) {
+	ExpressionList *el;
+	#ifdef DEBUG
+		if (expression == NULL) {
+			d("expression == NULL");
+			exit(1);
+		}
+	#endif
+	for (el = expression_list; el->next; el = el->next);
+	el->next = create_expression_list(expression);
+}
+
+Expression *create_block_expression(ExpressionList *expression_list) {
+	#ifdef DEBUG_LANG
+	d("create_block_expression");
+	#endif
+	Expression *expr;
+	expr = create_expression(BLOCK);
+	expr->u.expression_list = expression_list;
+	return expr;
 }
 
 void add_variable(Variable *variable) {
@@ -246,15 +308,13 @@ Variable *get_variable(char *name) {
 }
 
 void interpret(Script *script) {
-	#ifdef DEBUG
+	#ifdef DEBUG_LANG
 	d("interpret");
 	#endif
 	ExpressionList *el;
 	char str[80];
-	for (el = script->expression_list; el; el = el->next) {
-		value2string(str, sizeof(str), eval(el->expression));
-		printf("%s\n", str);
-	}
+	value2string(str, sizeof(str), eval(script->expression));
+	printf("%s\n", str);
 }
 
 int compile(FILE *input) {

@@ -16,6 +16,7 @@ typedef enum {
 	ASSIGN,
 	IDENTIFIER,
 	FUNCTION_CALL,
+	BLOCK,
 } ExpressionType;
 
 typedef enum {
@@ -43,6 +44,11 @@ typedef struct {
 	Expression *operand;
 } Assign;
 
+typedef struct ExpressionList_tag {
+	Expression *expression;
+	struct ExpressionList_tag *next;
+} ExpressionList;
+
 struct Expression_tag {
 	ExpressionType type;
 	union {
@@ -50,13 +56,9 @@ struct Expression_tag {
 		ExpressionPair *pair;
 		Assign *assign;
 		char *identifier;
+		ExpressionList *expression_list;
 	} u;
 };
-
-typedef struct ExpressionList_tag {
-	Expression *expression;
-	struct ExpressionList_tag *next;
-} ExpressionList;
 
 typedef enum {
 	FOREIGN_FUNCTION,
@@ -91,7 +93,7 @@ typedef struct VariableList_tag {
 } VariableList;
 
 typedef struct {
-	ExpressionList *expression_list;
+	Expression *expression;
 	VariableList *variable_list;
 } Script;
 
@@ -112,6 +114,8 @@ Expression *create_value_expression(Value *value);
 
 Expression *create_assign_expression(char *variable_name, Expression *operand);
 
+Expression *create_block_expression(ExpressionList *expression_list);
+
 char *create_identifier(char *identifier);
 
 Expression *create_identifier_expression(char *identifier);
@@ -130,7 +134,9 @@ Variable *get_variable(char *name);
 
 Script *create_script();
 
-void add_expression(Expression *expression);
+ExpressionList *create_expression_list(Expression *expression);
+
+void add_expression(ExpressionList *expression_list, Expression *expression);
 
 void interpret(Script *script);
 

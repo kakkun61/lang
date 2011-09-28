@@ -50,6 +50,8 @@ Value *create_integer(int value) {
 	return val;
 }
 
+Value *create_function(
+
 ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
 	#ifdef DEBUG_LANG
 	d("create_expression_pair");

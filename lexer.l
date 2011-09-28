@@ -17,6 +17,8 @@ int yywrap(void) {
 "=" return ASSIGN_TOKEN;
 "," return COMMA;
 "." return DOT;
+";" return SEMICOLON;
+func return FUNC_TOKEN;
 ([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);

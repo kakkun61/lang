@@ -75,7 +75,7 @@ struct Function_tag {
 	union {
 		struct {
 			ParameterList *parameter_list;
-			ExpressionList *sexpression_list;
+			Expression *expression;
 		} foreign;
 		struct {
 		} native;

@@ -31,6 +31,8 @@ int yyerror(char const *str);
        ASSIGN_TOKEN
        COMMA
        DOT
+       SEMICOLON
+       FUNC_TOKEN
 %type <expression_list> expression_list
 %type <expression> expression
                    additive_expression
@@ -38,6 +40,8 @@ int yyerror(char const *str);
                    unary_expression
                    primary_expression
                    block
+                   function_definition_expression
+                   function_call_expression
 %%
 root_expression:
 	expression {
@@ -103,7 +107,8 @@ expression:
 			d("expression: IDENTIFIER_TOKEN ASSIGN_TOKEN expression");
 		#endif
 		$$ = create_assign_expression($1, $3);
-	};
+	}
+	| function_definition_expression;
 additive_expression:
 	multiplicative_expression {
 		#ifdef DEBUG_PARSER
@@ -173,6 +178,19 @@ primary_expression:
 			d("primary_literal: IDENTIFIER_TOKEN");
 		#endif
 		$$ = create_identifier_expression($1);
+	};
+function_definition_expression: /* TODO */
+	FUNC_TOKEN SEMICOLON block {
+	}
+	| FUNC_TOKEN identifier_list SEMICOLON block {
+	};
+identifier_list:
+	IDENTIFIER_TOKEN {
+		$$ = create_parameter_list($1);
+	}
+	| identifier_list COMMA IDENTIFIER_TOKEN {
+		add_parameter($1, $3);
+		$$ = $1;
 	};
 %%
 int yyerror(char const *str) {

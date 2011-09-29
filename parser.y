@@ -18,6 +18,7 @@ int yyerror(char const *str);
 	char *identifier;
 	Expression *expression;
 	ExpressionList *expression_list;
+	IdentifierList *identifier_list;
 }
 %token <integer> INTEGER_LITERAL
 %token <float_point> FLOAT_POINT_LITERAL
@@ -41,7 +42,8 @@ int yyerror(char const *str);
                    primary_expression
                    block
                    function_definition_expression
-                   function_call_expression
+                   /*function_call_expression*/
+%type <identifier_list> identifier_list
 %%
 root_expression:
 	expression {
@@ -181,15 +183,23 @@ primary_expression:
 	};
 function_definition_expression: /* TODO */
 	FUNC_TOKEN SEMICOLON block {
+		#ifdef DEBUG_PARSER
+			d("function_definition_expression: FUNC_TOKEN SEMICOLON block");
+		#endif
+		$$ = create_value_expression(create_function(NULL, $3));
 	}
 	| FUNC_TOKEN identifier_list SEMICOLON block {
+		#ifdef DEBUG_PARSER
+			d("function_definition_expression: FUNC_TOKEN identifier_list SEMICOLON block");
+		#endif
+		$$ = create_value_expression(create_function($2, $4));
 	};
 identifier_list:
 	IDENTIFIER_TOKEN {
-		$$ = create_parameter_list($1);
+		$$ = create_identifier_list($1);
 	}
 	| identifier_list COMMA IDENTIFIER_TOKEN {
-		add_parameter($1, $3);
+		add_identifier($1, $3);
 		$$ = $1;
 	};
 %%

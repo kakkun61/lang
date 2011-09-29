@@ -3,9 +3,16 @@
 #include <string.h>
 #include "lang.h"
 
+#ifdef TEST
+#	include "debug.h"
+#endif
+
 #ifdef DEBUG
 #	define DEBUG_LANG
 #	include "debug.h"
+#	ifndef TEST
+#		define TEST
+#	endif
 #endif
 
 int value2string(char *string, size_t size, const Value *value);
@@ -50,7 +57,23 @@ Value *create_integer(int value) {
 	return val;
 }
 
-Value *create_function(
+Value *create_function(IdentifierList *parameter_list, Expression *expression) {
+	Value *val = create_value(FUNCTION);
+	#ifdef DEBUG_LANG
+		d("create_function");
+	#endif
+	#ifdef TEST
+		if (expression->type != BLOCK) {
+			d("interpreter bug: expression->type != BLOCK");
+			exit(1);
+		}
+	#endif
+	val->u.function = malloc(sizeof(Function));
+	val->u.function->type = FOREIGN_FUNCTION;
+	val->u.function->u.foreign.parameter_list = parameter_list;
+	val->u.function->u.foreign.expression_list = expression->u.expression_list;
+	return val;
+}
 
 ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
 	#ifdef DEBUG_LANG
@@ -208,7 +231,7 @@ Value *eval(Expression *expression) {
 				val = eval(el->expression);
 				#ifdef DEBUG_LANG
 					value2string(str, sizeof(str), val);
-					d(str);
+					d("%s", str);
 				#endif
 			}
 			return val;
@@ -272,6 +295,26 @@ void add_expression(ExpressionList *expression_list, Expression *expression) {
 	#endif
 	for (el = expression_list; el->next; el = el->next);
 	el->next = create_expression_list(expression);
+}
+
+IdentifierList *create_identifier_list(char *identifier) {
+	IdentifierList *il;
+	#ifdef DEBUG_LANG
+		d("create_identifier_list");
+	#endif
+	il = malloc(sizeof(IdentifierList));
+	il->identifier = identifier;
+	il->next = NULL;
+	return il;
+}
+
+void add_identifier(IdentifierList *identifier_list, char *identifier) {
+	IdentifierList *il;
+	#ifdef DEBUG_LANG
+		d("add_identifier");
+	#endif
+	for (il = identifier_list; il->next; il = il->next);
+	il->next = create_identifier_list(identifier);
 }
 
 Expression *create_block_expression(ExpressionList *expression_list) {

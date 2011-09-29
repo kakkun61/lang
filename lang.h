@@ -65,17 +65,17 @@ typedef enum {
 	NATIVE_FUNCTION,
 } FunctionType;
 
-typedef struct ParameterList_tag {
-	char *name;
-	struct ParameterList_tag *next;
-} ParameterList;
+typedef struct IdentifierList_tag {
+	char *identifier;
+	struct IdentifierList_tag *next;
+} IdentifierList;
 
 struct Function_tag {
 	FunctionType type;
 	union {
 		struct {
-			ParameterList *parameter_list;
-			Expression *expression;
+			IdentifierList *parameter_list;
+			ExpressionList *expression_list;
 		} foreign;
 		struct {
 		} native;
@@ -105,6 +105,8 @@ Value *create_value(ValueType type);
 Value *create_float_point(double value);
 
 Value *create_integer(int value);
+
+Value *create_function(IdentifierList *parameter_list, Expression *expression);
 
 ExpressionPair *create_expression_pair(Expression *left, Expression *right);
 
@@ -137,6 +139,10 @@ Script *create_script();
 ExpressionList *create_expression_list(Expression *expression);
 
 void add_expression(ExpressionList *expression_list, Expression *expression);
+
+IdentifierList *create_identifier_list(char *identifier);
+
+void add_identifier(IdentifierList *identifier_list, char *identifier);
 
 void interpret(Script *script);
 

@@ -230,7 +230,7 @@ Value *eval(Expression *expression) {
 				#endif
 				val = eval(el->expression);
 				#ifdef DEBUG_LANG
-					value2string(str, sizeof(str), val);
+					value2string(str, sizeof(str) - 1, val);
 					d("%s", str);
 				#endif
 			}
@@ -244,14 +244,35 @@ Value *eval(Expression *expression) {
 
 #undef BINEXP
 
-int value2string(char *string, size_t size, const Value *value) { // SEGV
+/**
+ * size に終端文字は含まない。
+ */
+int value2string(char *string, size_t size, const Value *value) {
 	switch (value->type) {
 	case INTEGER:
 		return snprintf(string, size, "%d", value->u.integer);
-		break;
 	case FLOAT:
 		return snprintf(string, size, "%lf", value->u.float_point);
-		break;
+	case FUNCTION:
+		{
+			int n = 0;
+			IdentifierList *il;
+			n += snprintf(string, size, "func");
+			il = value->u.function->u.foreign.parameter_list;
+			if (il) {
+				strncat(string, " ", size - n);
+				n++;
+				strncat(string, il->identifier, size - n);
+				n += strlen(il->identifier);
+				for (il = il->next; il; il = il->next) {
+					strncat(string, ", ", size - n);
+					n++;
+					strncat(string, il->identifier, size - n);
+					n += strlen(il->identifier);
+				}
+			}
+			return n;
+		}
 	default:
 		fprintf(stderr, "bad value type\n");
 		exit(1);

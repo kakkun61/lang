@@ -46,19 +46,7 @@ int yyerror(char const *str);
 %type <identifier_list> identifier_list
 %%
 root_expression:
-	expression {
-		#ifdef DEBUG_PARSER
-			d("root_expression: expression");
-		#endif
-		#ifdef DEBUG
-			if ($1 == NULL) {
-				d("$1 == NULL");
-				exit(1);
-			}
-		#endif
-		get_compile_script()->expression = $1;
-	}
-	| block {
+	block {
 		#ifdef DEBUG_PARSER
 			d("root_expression: block");
 		#endif

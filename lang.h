@@ -93,8 +93,12 @@ typedef struct VariableList_tag {
 } VariableList;
 
 typedef struct {
-	Expression *expression;
 	VariableList *variable_list;
+} Environment;
+
+typedef struct {
+	Expression *expression;
+	Environment *global_environment;
 } Script;
 
 /* lang.c */

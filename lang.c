@@ -279,6 +279,12 @@ int value2string(char *string, size_t size, const Value *value) {
 	}
 }
 
+Environment *create_environment() {
+	Environment *env = malloc(sizeof(Environment));
+	env->variable_list = NULL;
+	return env;
+}
+
 static Script *compile_script;
 
 void set_compile_script(Script *script) {
@@ -292,6 +298,7 @@ Script *get_compile_script() {
 Script *create_script() {
 	Script *script = malloc(sizeof(Script));
 	script->expression = NULL;
+	script->global_environment = create_environment();
 	return script;
 }
 
@@ -353,18 +360,18 @@ void add_variable(Variable *variable) {
 	crt = malloc(sizeof(VariableList));
 	crt->variable = variable;
 	crt->next = NULL;
-	if (compile_script->variable_list) {
-		for (vl = compile_script->variable_list; vl->next; vl = vl->next);
+	if (compile_script->global_environment->variable_list) {
+		for (vl = compile_script->global_environment->variable_list; vl->next; vl = vl->next);
 		vl->next = crt;
 	} else {
-		compile_script->variable_list = crt;
+		compile_script->global_environment->variable_list = crt;
 	}
 }
 
 Variable *get_variable(char *name) {
 	VariableList *vl;
-	if (compile_script->variable_list) {
-		for (vl = compile_script->variable_list; vl; vl = vl->next) {
+	if (compile_script->global_environment->variable_list) {
+		for (vl = compile_script->global_environment->variable_list; vl; vl = vl->next) {
 			if (!strcmp(vl->variable->name, name)) {
 				return vl->variable;
 			}

@@ -17,6 +17,7 @@ typedef enum {
 	IDENTIFIER,
 	FUNCTION_CALL,
 	BLOCK,
+	OUTER,
 } ExpressionType;
 
 typedef enum {
@@ -60,7 +61,7 @@ struct Expression_tag {
 		Value *value;
 		ExpressionPair *pair;
 		Assign *assign;
-		char *identifier;
+		char const *identifier;
 		ExpressionList *expression_list;
 		FunctionCall *function_call;
 	} u;
@@ -144,6 +145,8 @@ Expression *create_block_expression(ExpressionList *expression_list);
 char *create_identifier(char *identifier);
 
 Expression *create_identifier_expression(char *identifier);
+
+Expression *create_outer_expression(char const *const identifier);
 
 Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list);
 

@@ -258,6 +258,15 @@ Value *eval(Context *context, Expression *expression) {
 			// TODO
 			return NULL;
 		}
+	case OUTER:
+		{
+			if (EXIT_SUCCESS == add_outer_variable(context, expression->u.identifier)) {
+				return get_variable(context, expression->u.identifier)->value;
+			} else {
+				fprintf(stderr, "fail to eval: no such outer variable: %s\n", expression->u.identifier);
+				exit(EXIT_FAILURE);
+			}
+		}
 	default:
 		fprintf(stderr, "fail to eval: bad expression type: %d\n", expression->type);
 		exit(1);
@@ -376,6 +385,15 @@ Expression *create_block_expression(ExpressionList *expression_list) {
 	Expression *expr;
 	expr = create_expression(BLOCK);
 	expr->u.expression_list = expression_list;
+	return expr;
+}
+
+Expression *create_outer_expression(char const *identifier) {
+	#ifdef DEBUG_LANG
+		d("create_outer_expression");
+	#endif
+	Expression *expr = create_expression(OUTER);
+	expr->u.identifier = identifier;
 	return expr;
 }
 

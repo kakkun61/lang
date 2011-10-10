@@ -126,6 +126,17 @@ Expression *create_identifier_expression(char *identifier) {
 	expr->u.identifier = identifier;
 }
 
+Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list) {
+	#ifdef DEBUG_LANG
+		d("create_function_call_expression");
+	#endif
+	Expression *expr = create_expression(FUNCTION_CALL);
+	expr->u.function_call = malloc(sizeof(FunctionCall));
+	expr->u.function_call->identifier = identifier;
+	expr->u.function_call->argument_list = argument_list;
+	return expr;
+}
+
 #define BINEXP(op, left, right)\
 	({\
 		Value *tmp;\
@@ -162,7 +173,7 @@ Expression *create_identifier_expression(char *identifier) {
 		tmp;\
 	})
 
-Value *eval(Expression *expression) {
+Value *eval(Context *context, Expression *expression) {
 	#ifdef DEBUG_LANG
 	d("eval");
 	#endif
@@ -180,8 +191,8 @@ Value *eval(Expression *expression) {
 	case MUL:
 	case DIV:
 		{
-			Value *left = eval(expression->u.pair->left);
-			Value *right = eval(expression->u.pair->right);
+			Value *left = eval(context, expression->u.pair->left);
+			Value *right = eval(context, expression->u.pair->right);
 			switch (expression->type) {
 			case ADD:
 				return BINEXP(+, left, right);
@@ -198,17 +209,17 @@ Value *eval(Expression *expression) {
 			char *name;
 			Variable *var;
 			name = expression->u.assign->variable_name;
-			var = get_variable(name);
+			var = get_variable(context, name);
 			if (!var) {
 				var = malloc(sizeof(Variable));
 				var->name = name;
-				add_variable(var);
+				add_variable(context, var);
 			}
-			var->value = eval(expression->u.assign->operand);
+			var->value = eval(context, expression->u.assign->operand);
 			return var->value;
 		}
 	case IDENTIFIER:
-		return get_variable(expression->u.identifier)->value;
+		return get_variable(context, expression->u.identifier)->value;
 	case BLOCK:
 		{
 			ExpressionList *el;
@@ -228,7 +239,7 @@ Value *eval(Expression *expression) {
 						exit(1);
 					}
 				#endif
-				val = eval(el->expression);
+				val = eval(context, el->expression);
 				#ifdef DEBUG_LANG
 					value2string(str, sizeof(str) - 1, val);
 					d("%s", str);
@@ -236,8 +247,19 @@ Value *eval(Expression *expression) {
 			}
 			return val;
 		}
+	case FUNCTION_CALL:
+		{
+			/*Value *val;
+			Function func =*/	
+			#ifdef DEBUG_LANG
+				d("FUNCTION_CALL");
+			#endif
+			/*return val;*/
+			// TODO
+			return NULL;
+		}
 	default:
-		fprintf(stderr, "bad expression type\n");
+		fprintf(stderr, "fail to eval: bad expression type: %d\n", expression->type);
 		exit(1);
 	}
 }
@@ -257,11 +279,9 @@ int value2string(char *string, size_t size, const Value *value) {
 		{
 			int n = 0;
 			IdentifierList *il;
-			n += snprintf(string, size, "func");
+			n += snprintf(string, size, "func(");
 			il = value->u.function->u.foreign.parameter_list;
 			if (il) {
-				strncat(string, " ", size - n);
-				n++;
 				strncat(string, il->identifier, size - n);
 				n += strlen(il->identifier);
 				for (il = il->next; il; il = il->next) {
@@ -271,18 +291,22 @@ int value2string(char *string, size_t size, const Value *value) {
 					n += strlen(il->identifier);
 				}
 			}
+			strncat(string, ")", size - n);
+			n++;
 			return n;
 		}
 	default:
-		fprintf(stderr, "bad value type\n");
+		fprintf(stderr, "bad value type: %d\n", value->type);
 		exit(1);
 	}
 }
 
-Environment *create_environment() {
-	Environment *env = malloc(sizeof(Environment));
-	env->variable_list = NULL;
-	return env;
+Context *create_context(void) {
+	Context *ctx = malloc(sizeof(Context));
+	ctx->variable_list = NULL;
+	ctx->outer_variable_list = NULL;
+	ctx->outer = NULL;
+	return ctx;
 }
 
 static Script *compile_script;
@@ -291,14 +315,14 @@ void set_compile_script(Script *script) {
 	compile_script = script;
 }
 
-Script *get_compile_script() {
+Script *get_compile_script(void) {
 	return compile_script;
 }
 
-Script *create_script() {
+Script *create_script(void) {
 	Script *script = malloc(sizeof(Script));
 	script->expression = NULL;
-	script->global_environment = create_environment();
+	script->global_context = create_context();
 	return script;
 }
 
@@ -355,23 +379,53 @@ Expression *create_block_expression(ExpressionList *expression_list) {
 	return expr;
 }
 
-void add_variable(Variable *variable) {
+/**
+ * @return 成功したとき、EXIT_SUCCESS (stdlib.h)
+ */
+int add_outer_variable(Context *const context, char const *const name) {
+	if (context->outer) {
+		Variable *var = get_variable(context->outer, name);
+		if (var) {
+			OuterVariableList *crt = malloc(sizeof(OuterVariableList));
+			crt->variable = var;
+			crt->next = NULL;
+			if (context->outer_variable_list) {
+				OuterVariableList *ovl;
+				GET_LAST(ovl, context->outer_variable_list);
+				ovl->next = crt;
+			} else {
+				context->outer_variable_list = crt;
+			}
+			return EXIT_SUCCESS;
+		}
+	}
+	return EXIT_FAILURE;
+}
+
+void add_variable(Context *const context, Variable *const variable) {
 	VariableList *crt, *vl;
 	crt = malloc(sizeof(VariableList));
 	crt->variable = variable;
 	crt->next = NULL;
-	if (compile_script->global_environment->variable_list) {
-		for (vl = compile_script->global_environment->variable_list; vl->next; vl = vl->next);
+	if (context->variable_list) {
+		for (vl = context->variable_list; vl->next; vl = vl->next);
 		vl->next = crt;
 	} else {
-		compile_script->global_environment->variable_list = crt;
+		context->variable_list = crt;
 	}
 }
 
-Variable *get_variable(char *name) {
-	VariableList *vl;
-	if (compile_script->global_environment->variable_list) {
-		for (vl = compile_script->global_environment->variable_list; vl; vl = vl->next) {
+Variable *get_variable(Context const *const context, char const *const name) {
+	if (context->outer_variable_list) {
+		OuterVariableList *ovl;
+		for (ovl = context->outer_variable_list; ovl; ovl = ovl->next) {
+			if (!strcmp(ovl->variable->name, name)) {
+				return ovl->variable;
+			}
+		}
+	} else if (context->variable_list) {
+		VariableList *vl;
+		for (vl = context->variable_list; vl; vl = vl->next) {
 			if (!strcmp(vl->variable->name, name)) {
 				return vl->variable;
 			}
@@ -386,7 +440,7 @@ void interpret(Script *script) {
 	#endif
 	ExpressionList *el;
 	char str[80];
-	value2string(str, sizeof(str), eval(script->expression));
+	value2string(str, sizeof(str), eval(script->global_context, script->expression));
 	printf("%s\n", str);
 }
 

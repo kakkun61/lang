@@ -42,7 +42,7 @@ int yyerror(char const *str);
                    primary_expression
                    block
                    function_definition_expression
-                   /*function_call_expression*/
+                   function_call_expression
 %type <identifier_list> identifier_list
 %%
 root_expression:
@@ -98,7 +98,8 @@ expression:
 		#endif
 		$$ = create_assign_expression($1, $3);
 	}
-	| function_definition_expression;
+	| function_definition_expression
+	| function_call_expression;
 additive_expression:
 	multiplicative_expression {
 		#ifdef DEBUG_PARSER
@@ -169,18 +170,18 @@ primary_expression:
 		#endif
 		$$ = create_identifier_expression($1);
 	};
-function_definition_expression: /* TODO */
-	FUNC_TOKEN SEMICOLON block {
+function_definition_expression:
+	FUNC_TOKEN LP RP block {
 		#ifdef DEBUG_PARSER
-			d("function_definition_expression: FUNC_TOKEN SEMICOLON block");
+			d("function_definition_expression: FUNC_TOKEN LP RP block");
 		#endif
-		$$ = create_value_expression(create_function(NULL, $3));
+		$$ = create_value_expression(create_function(NULL, $4));
 	}
-	| FUNC_TOKEN identifier_list SEMICOLON block {
+	| FUNC_TOKEN LP identifier_list RP block {
 		#ifdef DEBUG_PARSER
-			d("function_definition_expression: FUNC_TOKEN identifier_list SEMICOLON block");
+			d("function_definition_expression: FUNC_TOKEN LP identifier_list RP block");
 		#endif
-		$$ = create_value_expression(create_function($2, $4));
+		$$ = create_value_expression(create_function($3, $5));
 	};
 identifier_list:
 	IDENTIFIER_TOKEN {
@@ -189,6 +190,19 @@ identifier_list:
 	| identifier_list COMMA IDENTIFIER_TOKEN {
 		add_identifier($1, $3);
 		$$ = $1;
+	};
+function_call_expression:
+	IDENTIFIER_TOKEN LP RP {
+		#ifdef DEBUG_PARSER
+			d("function_call_expression: IDENTIFIER_TOKEN LP RP");
+		#endif
+		$$ = create_function_call_expression($1, NULL);
+	}
+	| IDENTIFIER_TOKEN LP expression_list RP {
+		#ifdef DEBUG_PARSER
+			d("function_call_expression: IDENTIFIER_TOKEN LP expression_list RP");
+		#endif
+		$$ = create_function_call_expression($1, $3);
 	};
 %%
 int yyerror(char const *str) {

@@ -49,6 +49,11 @@ typedef struct ExpressionList_tag {
 	struct ExpressionList_tag *next;
 } ExpressionList;
 
+typedef struct {
+	char *identifier;
+	ExpressionList *argument_list;
+} FunctionCall;
+
 struct Expression_tag {
 	ExpressionType type;
 	union {
@@ -57,6 +62,7 @@ struct Expression_tag {
 		Assign *assign;
 		char *identifier;
 		ExpressionList *expression_list;
+		FunctionCall *function_call;
 	} u;
 };
 
@@ -92,14 +98,27 @@ typedef struct VariableList_tag {
 	struct VariableList_tag *next;
 } VariableList;
 
-typedef struct {
+typedef struct OuterVariableList_tag {
+	Variable *variable;
+	struct OuterVariableList_tag *next;
+} OuterVariableList;
+
+typedef struct Context_tag {
 	VariableList *variable_list;
-} Environment;
+	OuterVariableList *outer_variable_list;
+	struct Context_tag *outer;
+} Context;
 
 typedef struct {
 	Expression *expression;
-	Environment *global_environment;
+	Context *global_context;
 } Script;
+
+/**
+ * @param var 変数名
+ * @param start 初期値
+ */
+#define GET_LAST(var, start) for ((var) = (start); (var)->next; (var) = (var)->next)
 
 /* lang.c */
 Expression *create_expression(ExpressionType type);
@@ -126,19 +145,25 @@ char *create_identifier(char *identifier);
 
 Expression *create_identifier_expression(char *identifier);
 
-Value *eval(Expression *expression);
+Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list);
+
+Context *create_context(void);
+
+Value *eval(Context *context, Expression *expression);
 
 void print_value(Value *value);
 
 void set_compile_script(Script *script);
 
-Script *get_compile_script();
+Script *get_compile_script(void);
 
-void add_variable(Variable *variable);
+int add_outer_variable(Context *const context, char const *const name);
 
-Variable *get_variable(char *name);
+void add_variable(Context *const context, Variable *const variable);
 
-Script *create_script();
+Variable *get_variable(Context const * const context, char const * const name);
+
+Script *create_script(void);
 
 ExpressionList *create_expression_list(Expression *expression);
 

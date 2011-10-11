@@ -82,7 +82,7 @@ struct Function_tag {
 	union {
 		struct {
 			IdentifierList *parameter_list;
-			ExpressionList *expression_list;
+			Expression *expression;
 		} foreign;
 		struct {
 		} native;
@@ -90,7 +90,7 @@ struct Function_tag {
 };
 
 typedef struct {
-	char *name;
+	char const *name;
 	Value *value;
 } Variable;
 
@@ -150,6 +150,8 @@ Expression *create_outer_expression(char const *const identifier);
 
 Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list);
 
+Variable *create_variable(char const *const name);
+
 Context *create_context(void);
 
 Value *eval(Context *context, Expression *expression);
@@ -164,7 +166,7 @@ int add_outer_variable(Context *const context, char const *const name);
 
 void add_variable(Context *const context, Variable *const variable);
 
-Variable *get_variable(Context const * const context, char const * const name);
+Variable *get_variable(Context const *const context, char const *const name);
 
 Script *create_script(void);
 

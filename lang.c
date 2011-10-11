@@ -71,7 +71,7 @@ Value *create_function(IdentifierList *parameter_list, Expression *expression) {
 	val->u.function = malloc(sizeof(Function));
 	val->u.function->type = FOREIGN_FUNCTION;
 	val->u.function->u.foreign.parameter_list = parameter_list;
-	val->u.function->u.foreign.expression_list = expression->u.expression_list;
+	val->u.function->u.foreign.expression = expression;
 	return val;
 }
 
@@ -211,8 +211,7 @@ Value *eval(Context *context, Expression *expression) {
 			name = expression->u.assign->variable_name;
 			var = get_variable(context, name);
 			if (!var) {
-				var = malloc(sizeof(Variable));
-				var->name = name;
+				var = create_variable(name);
 				add_variable(context, var);
 			}
 			var->value = eval(context, expression->u.assign->operand);
@@ -249,14 +248,48 @@ Value *eval(Context *context, Expression *expression) {
 		}
 	case FUNCTION_CALL:
 		{
-			/*Value *val;
-			Function func =*/	
+			Variable *var;
 			#ifdef DEBUG_LANG
 				d("FUNCTION_CALL");
 			#endif
-			/*return val;*/
-			// TODO
-			return NULL;
+			var = get_variable(context, expression->u.function_call->identifier);
+			if (var) {
+				if (var->value->type == FUNCTION) {
+					Function *func;
+					func = var->value->u.function;
+					if (func->type == FOREIGN_FUNCTION) {
+						IdentifierList const *pl;
+						ExpressionList const *el;
+						Context *fc;
+						fc = create_context();
+						fc->outer = context;
+						for (pl = func->u.foreign.parameter_list, el = expression->u.function_call->argument_list;
+						     pl && el;
+						     pl = pl->next, el = el->next) {
+							Variable *var = create_variable(pl->identifier);
+							var->value = eval(context, el->expression);
+							add_variable(fc, var);
+						}
+						if (pl) {
+							fprintf(stderr, "fail to eval: too few parameters: %s\n", var->name);
+							exit(EXIT_FAILURE);
+						}
+						if (el) {
+							fprintf(stderr, "fail to eval: too few arguments: %s\n", var->name);
+							exit(EXIT_FAILURE);
+						}
+						return eval(fc, func->u.foreign.expression);
+					} else if (func->type == NATIVE_FUNCTION) {
+						fprintf(stderr, "native function is not implemented\n");
+						exit(EXIT_FAILURE);
+					} else {
+						fprintf(stderr, "fail to eval: bad function type: %d\n", expression->type);
+						exit(1);
+					}
+				}
+			}
+			fprintf(stderr, "fail to eval: no such function: %s\n", expression->u.function_call->identifier);
+			exit(EXIT_FAILURE);
 		}
 	case OUTER:
 		{
@@ -308,6 +341,13 @@ int value2string(char *string, size_t size, const Value *value) {
 		fprintf(stderr, "bad value type: %d\n", value->type);
 		exit(1);
 	}
+}
+
+Variable *create_variable(char const *const name) {
+	Variable *var = malloc(sizeof(Variable));
+	var->name = name;
+	var->value = NULL;
+	return var;
 }
 
 Context *create_context(void) {

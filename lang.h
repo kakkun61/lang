@@ -99,14 +99,8 @@ typedef struct VariableList_tag {
 	struct VariableList_tag *next;
 } VariableList;
 
-typedef struct OuterVariableList_tag {
-	Variable *variable;
-	struct OuterVariableList_tag *next;
-} OuterVariableList;
-
 typedef struct Context_tag {
 	VariableList *variable_list;
-	OuterVariableList *outer_variable_list;
 	struct Context_tag *outer;
 } Context;
 

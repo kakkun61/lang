@@ -383,7 +383,6 @@ Variable *create_variable(char const *const name) {
 Context *create_context(void) {
 	Context *ctx = malloc(sizeof(Context));
 	ctx->variable_list = NULL;
-	ctx->outer_variable_list = NULL;
 	ctx->outer = NULL;
 	return ctx;
 }
@@ -474,16 +473,7 @@ Variable *add_outer_variable(Context *const context, char const *const name) {
 	if (context->outer) {
 		Variable *var = get_variable(context->outer, name);
 		if (var) {
-			OuterVariableList *crt = malloc(sizeof(OuterVariableList));
-			crt->variable = var;
-			crt->next = NULL;
-			if (context->outer_variable_list) {
-				OuterVariableList *ovl;
-				GET_LAST(ovl, context->outer_variable_list);
-				ovl->next = crt;
-			} else {
-				context->outer_variable_list = crt;
-			}
+			add_variable(context, var);
 			return var;
 		}
 	}
@@ -504,14 +494,6 @@ void add_variable(Context *const context, Variable *const variable) {
 }
 
 Variable *get_variable(Context const *const context, char const *const name) {
-	if (context->outer_variable_list) {
-		OuterVariableList *ovl;
-		for (ovl = context->outer_variable_list; ovl; ovl = ovl->next) {
-			if (!strcmp(ovl->variable->name, name)) {
-				return ovl->variable;
-			}
-		}
-	}
 	if (context->variable_list) {
 		VariableList *vl;
 		for (vl = context->variable_list; vl; vl = vl->next) {

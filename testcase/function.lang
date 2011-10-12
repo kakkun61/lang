@@ -1,5 +1,7 @@
-ten = 10,
-multi20 = func(a)
-	outer ten,
-	a * 2 * ten.,
-multi20(4).
+v = 10,
+incr = func()
+	outer v,
+	v = v + 1.,
+v,
+incr(),
+v.

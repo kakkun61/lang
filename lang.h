@@ -162,7 +162,7 @@ void set_compile_script(Script *script);
 
 Script *get_compile_script(void);
 
-int add_outer_variable(Context *const context, char const *const name);
+Variable *add_outer_variable(Context *const context, char const *const name);
 
 void add_variable(Context *const context, Variable *const variable);
 

@@ -185,14 +185,24 @@ Value *eval(Context *context, Expression *expression) {
 	#endif
 	switch (expression->type) {
 	case VALUE:
-		return expression->u.value;
+		{
+			#ifdef DEBUG_LANG
+				d("VALUE");
+			#endif
+			return expression->u.value;
+		}
 	case ADD:
 	case SUB:
 	case MUL:
 	case DIV:
 		{
-			Value *left = eval(context, expression->u.pair->left);
-			Value *right = eval(context, expression->u.pair->right);
+			Value *left;
+			Value *right;
+			#ifdef DEBUG_LANG
+				d("ADD | SUB | MUL | DIV");
+			#endif
+			left = eval(context, expression->u.pair->left);
+			right = eval(context, expression->u.pair->right);
 			switch (expression->type) {
 			case ADD:
 				return BINEXP(+, left, right);
@@ -208,6 +218,9 @@ Value *eval(Context *context, Expression *expression) {
 		{
 			char *name;
 			Variable *var;
+			#ifdef DEBUG_LANG
+				d("ASSIGN");
+			#endif
 			name = expression->u.assign->variable_name;
 			var = get_variable(context, name);
 			if (!var) {
@@ -218,15 +231,27 @@ Value *eval(Context *context, Expression *expression) {
 			return var->value;
 		}
 	case IDENTIFIER:
-		return get_variable(context, expression->u.identifier)->value;
+		{
+			Variable *var;
+			#ifdef DEBUG_LANG
+				d("IDENTIFIER");
+			#endif
+			var = get_variable(context, expression->u.identifier);
+			if (var) {
+				return var->value;
+			} else {
+				fprintf(stderr, "fail to eval: no such variable: %s\n", expression->u.identifier);
+				exit(1);
+			}
+		}
 	case BLOCK:
 		{
 			ExpressionList *el;
 			Value *val;
 			#ifdef DEBUG_LANG
 				char str[80];
-				d("eval BLOCK");
-				if (!expression->u.expression_list) { // => true
+				d("BLOCK");
+				if (!expression->u.expression_list) {
 					d("!expression->u.expression_list");
 					exit(1);
 				}
@@ -293,8 +318,13 @@ Value *eval(Context *context, Expression *expression) {
 		}
 	case OUTER:
 		{
-			if (EXIT_SUCCESS == add_outer_variable(context, expression->u.identifier)) {
-				return get_variable(context, expression->u.identifier)->value;
+			Variable *var;
+			#ifdef DEBUG_LANG
+				d("OUTER");
+			#endif
+			var = add_outer_variable(context, expression->u.identifier);
+			if (var) {
+				return var->value;
 			} else {
 				fprintf(stderr, "fail to eval: no such outer variable: %s\n", expression->u.identifier);
 				exit(EXIT_FAILURE);
@@ -438,9 +468,9 @@ Expression *create_outer_expression(char const *identifier) {
 }
 
 /**
- * @return 成功したとき、EXIT_SUCCESS (stdlib.h)
+ * @return 成功時、Variable のアドレス。失敗時。NULL。
  */
-int add_outer_variable(Context *const context, char const *const name) {
+Variable *add_outer_variable(Context *const context, char const *const name) {
 	if (context->outer) {
 		Variable *var = get_variable(context->outer, name);
 		if (var) {
@@ -454,10 +484,10 @@ int add_outer_variable(Context *const context, char const *const name) {
 			} else {
 				context->outer_variable_list = crt;
 			}
-			return EXIT_SUCCESS;
+			return var;
 		}
 	}
-	return EXIT_FAILURE;
+	return NULL;
 }
 
 void add_variable(Context *const context, Variable *const variable) {
@@ -481,7 +511,8 @@ Variable *get_variable(Context const *const context, char const *const name) {
 				return ovl->variable;
 			}
 		}
-	} else if (context->variable_list) {
+	}
+	if (context->variable_list) {
 		VariableList *vl;
 		for (vl = context->variable_list; vl; vl = vl->next) {
 			if (!strcmp(vl->variable->name, name)) {

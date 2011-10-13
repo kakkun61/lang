@@ -2,6 +2,6 @@ v = 10,
 incr = func()
 	outer v,
 	v = v + 1.,
-v,
+incr(),
 incr(),
 v.

@@ -94,8 +94,14 @@ typedef struct {
 	Value *value;
 } Variable;
 
+typedef enum {
+	LOCAL_VARIABLE,
+	OUTER_VARIABLE
+} VariableType;
+
 typedef struct VariableList_tag {
 	Variable *variable;
+	VariableType type;
 	struct VariableList_tag *next;
 } VariableList;
 
@@ -158,7 +164,9 @@ Script *get_compile_script(void);
 
 Variable *add_outer_variable(Context *const context, char const *const name);
 
-void add_variable(Context *const context, Variable *const variable);
+void add_local_variable(Context *const context, Variable *const variable);
+
+void add_variable(Context *const context, Variable *const variable, VariableType const type);
 
 Variable *get_variable(Context const *const context, char const *const name);
 

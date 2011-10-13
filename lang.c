@@ -225,7 +225,7 @@ Value *eval(Context *context, Expression *expression) {
 			var = get_variable(context, name);
 			if (!var) {
 				var = create_variable(name);
-				add_variable(context, var);
+				add_local_variable(context, var);
 			}
 			var->value = eval(context, expression->u.assign->operand);
 			return var->value;
@@ -293,7 +293,7 @@ Value *eval(Context *context, Expression *expression) {
 						     pl = pl->next, el = el->next) {
 							Variable *var = create_variable(pl->identifier);
 							var->value = eval(context, el->expression);
-							add_variable(fc, var);
+							add_local_variable(fc, var);
 						}
 						if (pl) {
 							fprintf(stderr, "fail to eval: too few parameters: %s\n", var->name);
@@ -473,17 +473,22 @@ Variable *add_outer_variable(Context *const context, char const *const name) {
 	if (context->outer) {
 		Variable *var = get_variable(context->outer, name);
 		if (var) {
-			add_variable(context, var);
+			add_variable(context, var, OUTER_VARIABLE);
 			return var;
 		}
 	}
 	return NULL;
 }
 
-void add_variable(Context *const context, Variable *const variable) {
+void add_local_variable(Context *const context, Variable *const variable) {
+	add_variable(context, variable, LOCAL_VARIABLE);
+}
+
+void add_variable(Context *const context, Variable *const variable, VariableType const type) {
 	VariableList *crt, *vl;
 	crt = malloc(sizeof(VariableList));
 	crt->variable = variable;
+	crt->type = type;
 	crt->next = NULL;
 	if (context->variable_list) {
 		for (vl = context->variable_list; vl->next; vl = vl->next);

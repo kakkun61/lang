@@ -1,0 +1,8 @@
+a = 1,
+f = func()
+	outer a,
+	a.,
+g = func(f)
+	a = 2,
+	f().,
+g(f).

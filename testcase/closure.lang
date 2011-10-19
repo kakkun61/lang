@@ -1,6 +1,7 @@
-a = 1,
-f = func()
-	outer a,
-	a.,
-a = 2,
-f().
+build_add = func(a, b)
+	func()
+		outer a,
+		outer b,
+		a + b..,
+ans3 = build_add(1, 2),
+ans3().

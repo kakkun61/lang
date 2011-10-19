@@ -67,28 +67,6 @@ struct Expression_tag {
 	} u;
 };
 
-typedef enum {
-	FOREIGN_FUNCTION,
-	NATIVE_FUNCTION,
-} FunctionType;
-
-typedef struct IdentifierList_tag {
-	char *identifier;
-	struct IdentifierList_tag *next;
-} IdentifierList;
-
-struct Function_tag {
-	FunctionType type;
-	union {
-		struct {
-			IdentifierList *parameter_list;
-			Expression *expression;
-		} foreign;
-		struct {
-		} native;
-	} u;
-};
-
 typedef struct {
 	char const *name;
 	Value *value;
@@ -109,6 +87,29 @@ typedef struct Context_tag {
 	VariableList *variable_list;
 	struct Context_tag *outer;
 } Context;
+
+typedef enum {
+	FOREIGN_FUNCTION,
+	NATIVE_FUNCTION,
+} FunctionType;
+
+typedef struct IdentifierList_tag {
+	char *identifier;
+	struct IdentifierList_tag *next;
+} IdentifierList;
+
+struct Function_tag {
+	FunctionType type;
+	union {
+		struct {
+			IdentifierList *parameter_list;
+			Expression *expression;
+			Context *context;
+		} foreign;
+		struct {
+		} native;
+	} u;
+};
 
 typedef struct {
 	Expression *expression;

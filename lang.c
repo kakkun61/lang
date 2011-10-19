@@ -189,6 +189,10 @@ Value *eval(Context *context, Expression *expression) {
 			#ifdef DEBUG_LANG
 				d("VALUE");
 			#endif
+			if (expression->u.value->type == FUNCTION
+					&& expression->u.value->u.function->type == FOREIGN_FUNCTION) {
+				expression->u.value->u.function->u.foreign.context = context;
+			}
 			return expression->u.value;
 		}
 	case ADD:
@@ -287,7 +291,7 @@ Value *eval(Context *context, Expression *expression) {
 						ExpressionList const *el;
 						Context *fc;
 						fc = create_context();
-						fc->outer = context;
+						fc->outer = func->u.foreign.context;
 						for (pl = func->u.foreign.parameter_list, el = expression->u.function_call->argument_list;
 						     pl && el;
 						     pl = pl->next, el = el->next) {

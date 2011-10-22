@@ -37,8 +37,8 @@ typedef struct {
 } Value;
 
 typedef struct ExpressionPair_tag {
-	Expression *left;
-	Expression *right;
+	Expression const *left;
+	Expression const *right;
 } ExpressionPair;
 
 typedef struct {
@@ -47,23 +47,23 @@ typedef struct {
 } Assign;
 
 typedef struct ExpressionList_tag {
-	Expression *expression;
+	Expression const *expression;
 	struct ExpressionList_tag *next;
 } ExpressionList;
 
 typedef struct {
-	char *identifier;
-	ExpressionList *argument_list;
+	char const *identifier;
+	ExpressionList const *argument_list;
 } FunctionCall;
 
 struct Expression_tag {
 	ExpressionType type;
 	union {
 		Value *value;
-		ExpressionPair *pair;
+		ExpressionPair const *pair;
 		Assign *assign;
-		char const *identifier;
-		ExpressionList *expression_list;
+		char const const *identifier;
+		ExpressionList const *expression_list;
 		FunctionCall *function_call;
 	} u;
 };
@@ -91,7 +91,7 @@ typedef struct VariableList_tag {
 
 typedef struct Context_tag {
 	TypedVariableList *variable_list;
-	struct Context_tag *outer;
+	struct Context_tag const *outer;
 	VariableList *inner_variable_list;
 } Context;
 
@@ -101,7 +101,7 @@ typedef enum {
 } FunctionType;
 
 typedef struct IdentifierList_tag {
-	char *identifier;
+	char const *identifier;
 	struct IdentifierList_tag *next;
 } IdentifierList;
 
@@ -109,9 +109,9 @@ struct Function_tag {
 	FunctionType type;
 	union {
 		struct {
-			IdentifierList *parameter_list;
-			Expression *expression;
-			Context *context;
+			IdentifierList const *parameter_list;
+			Expression const *expression;
+			Context const *context;
 		} foreign;
 		struct {
 		} native;
@@ -164,7 +164,7 @@ Variable *create_variable(char const *const name);
 
 Context *create_context(void);
 
-Value *eval(Context const *context, Expression const *expression);
+Value *eval(Context *const context, Expression const *const expression);
 
 void print_value(Value *value);
 

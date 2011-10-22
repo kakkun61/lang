@@ -177,7 +177,7 @@ Expression *create_function_call_expression(char *identifier, ExpressionList *ar
 		tmp;\
 	})
 
-Value *eval(Context const *context, Expression const *expression) {
+Value *eval(Context *const context, Expression const *const expression) {
 	#ifdef DEBUG_LANG
 	d("eval");
 	#endif
@@ -204,8 +204,8 @@ Value *eval(Context const *context, Expression const *expression) {
 	case MUL:
 	case DIV:
 		{
-			Value *left;
-			Value *right;
+			Value const *left;
+			Value const *right;
 			#ifdef DEBUG_LANG
 				d("ADD | SUB | MUL | DIV");
 			#endif
@@ -225,7 +225,7 @@ Value *eval(Context const *context, Expression const *expression) {
 	case ASSIGN:
 		{
 			char const *name;
-			Variable const *var;
+			Variable *var;
 			#ifdef DEBUG_LANG
 				d("ASSIGN");
 			#endif
@@ -254,7 +254,7 @@ Value *eval(Context const *context, Expression const *expression) {
 		}
 	case BLOCK:
 		{
-			ExpressionList *el;
+			ExpressionList const *el;
 			Value *val;
 			#ifdef DEBUG_LANG
 				char str[80];
@@ -362,7 +362,7 @@ int value2string(char *string, size_t size, const Value *value) {
 	case FUNCTION:
 		{
 			int n = 0;
-			IdentifierList *il;
+			IdentifierList const *il;
 			n += snprintf(string, size, "func(");
 			il = value->u.function->u.foreign.parameter_list;
 			if (il) {

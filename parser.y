@@ -35,6 +35,7 @@ int yyerror(char const *str);
        SEMICOLON
        FUNC_TOKEN
        OUTER_TOKEN
+       INNER_TOKEN
 %type <expression_list> expression_list
 %type <expression> expression
                    additive_expression
@@ -104,6 +105,12 @@ expression:
 			d("expression: OUTER_TOKEN IDENTIFIER_TOKEN");
 		#endif
 		$$ = create_outer_expression($2);
+	}
+	| INNER_TOKEN IDENTIFIER_TOKEN ASSIGN_TOKEN expression {
+		#ifdef DEBUG_PARSER
+			d("expression: INNER_TOKEN IDENTIFIER_TOKEN ASSIGN_TOKEN expression");
+		#endif
+		$$ = create_inner_assign_expression($2, $4);
 	}
 	| function_definition_expression
 	| function_call_expression;

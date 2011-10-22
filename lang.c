@@ -103,15 +103,19 @@ Expression *create_value_expression(Value *value) {
 	return expr;
 }
 
-Expression *create_assign_expression(char *variable_name, Expression *operand) {
+Expression *create_assign_sub(ExpressionType const type, char const *const identifier, Expression const *const operand) {
+	Expression *expr = create_expression(type);
+	expr->u.assign = malloc(sizeof(Assign));
+	expr->u.assign->identifier = identifier;
+	expr->u.assign->operand = operand;
+	return expr;
+}
+
+Expression *create_assign_expression(char *identifier, Expression *operand) {
 	#ifdef DEBUG_LANG
 	d("create_assign_expression");
 	#endif
-	Expression *expr = create_expression(ASSIGN);
-	expr->u.assign = malloc(sizeof(Assign));
-	expr->u.assign->variable_name = variable_name;
-	expr->u.assign->operand = operand;
-	return expr;
+	return create_assign_sub(ASSIGN, identifier, operand);
 }
 
 char *create_identifier(char *identifier) {
@@ -173,7 +177,7 @@ Expression *create_function_call_expression(char *identifier, ExpressionList *ar
 		tmp;\
 	})
 
-Value *eval(Context *context, Expression *expression) {
+Value *eval(Context const *context, Expression const *expression) {
 	#ifdef DEBUG_LANG
 	d("eval");
 	#endif
@@ -220,12 +224,12 @@ Value *eval(Context *context, Expression *expression) {
 		}
 	case ASSIGN:
 		{
-			char *name;
-			Variable *var;
+			char const *name;
+			Variable const *var;
 			#ifdef DEBUG_LANG
 				d("ASSIGN");
 			#endif
-			name = expression->u.assign->variable_name;
+			name = expression->u.assign->identifier;
 			var = get_variable(context, name);
 			if (!var) {
 				var = create_variable(name);
@@ -333,6 +337,10 @@ Value *eval(Context *context, Expression *expression) {
 				fprintf(stderr, "fail to eval: no such outer variable: %s\n", expression->u.identifier);
 				exit(EXIT_FAILURE);
 			}
+		}
+	case INNER_ASSIGN:	// TODO
+		{
+			
 		}
 	default:
 		fprintf(stderr, "fail to eval: bad expression type: %d\n", expression->type);
@@ -461,13 +469,33 @@ Expression *create_block_expression(ExpressionList *expression_list) {
 	return expr;
 }
 
-Expression *create_outer_expression(char const *identifier) {
+Expression *create_outer_expression(char const *const identifier) {
 	#ifdef DEBUG_LANG
 		d("create_outer_expression");
 	#endif
 	Expression *expr = create_expression(OUTER);
 	expr->u.identifier = identifier;
 	return expr;
+}
+
+Expression *create_inner_assign_expression(char const *const identifier, Expression const *const expression) {
+	#ifdef DEBUG_LANG
+		d("create_inner_expression");
+	#endif
+	return create_assign_sub(INNER_ASSIGN, identifier, expression);
+}
+
+void add_inner_variable(Context *const context, Variable *const variable) {
+	VariableList *crt, *vl;
+	crt = malloc(sizeof(VariableList));
+	crt->variable = variable;
+	crt->next = NULL;
+	if (context->inner_variable_list) {
+		GET_LAST(vl, context->inner_variable_list);
+		vl->next = crt;
+	} else {
+		context->inner_variable_list = crt;
+	}
 }
 
 /**
@@ -489,25 +517,25 @@ void add_local_variable(Context *const context, Variable *const variable) {
 }
 
 void add_variable(Context *const context, Variable *const variable, VariableType const type) {
-	VariableList *crt, *vl;
-	crt = malloc(sizeof(VariableList));
+	TypedVariableList *crt, *tvl;
+	crt = malloc(sizeof(TypedVariableList));
 	crt->variable = variable;
 	crt->type = type;
 	crt->next = NULL;
 	if (context->variable_list) {
-		for (vl = context->variable_list; vl->next; vl = vl->next);
-		vl->next = crt;
+		for (tvl = context->variable_list; tvl->next; tvl = tvl->next);
+		tvl->next = crt;
 	} else {
 		context->variable_list = crt;
 	}
 }
 
-Variable *get_variable(Context const *const context, char const *const name) {
+Variable *get_variable(Context const *const context, char const *const name) {// TODO
 	if (context->variable_list) {
-		VariableList *vl;
-		for (vl = context->variable_list; vl; vl = vl->next) {
-			if (!strcmp(vl->variable->name, name)) {
-				return vl->variable;
+		TypedVariableList *tvl;
+		for (tvl = context->variable_list; tvl; tvl = tvl->next) {
+			if (!strcmp(tvl->variable->name, name)) {
+				return tvl->variable;
 			}
 		}
 	}

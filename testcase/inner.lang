@@ -1,0 +1,2 @@
+inner ten = func() 10.,
+ten().

@@ -20,6 +20,7 @@ int yywrap(void) {
 ";" return SEMICOLON;
 func return FUNC_TOKEN;
 outer return OUTER_TOKEN;
+inner return INNER_TOKEN;
 ([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);

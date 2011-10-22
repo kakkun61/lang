@@ -18,6 +18,7 @@ typedef enum {
 	FUNCTION_CALL,
 	BLOCK,
 	OUTER,
+	INNER_ASSIGN
 } ExpressionType;
 
 typedef enum {
@@ -41,8 +42,8 @@ typedef struct ExpressionPair_tag {
 } ExpressionPair;
 
 typedef struct {
-	char *variable_name;
-	Expression *operand;
+	char const *identifier;
+	Expression const *operand;
 } Assign;
 
 typedef struct ExpressionList_tag {
@@ -74,18 +75,24 @@ typedef struct {
 
 typedef enum {
 	LOCAL_VARIABLE,
-	OUTER_VARIABLE
+	OUTER_VARIABLE,
 } VariableType;
+
+typedef struct TypedVariableList_tag {
+	Variable *variable;
+	VariableType type;
+	struct TypedVariableList_tag *next;
+} TypedVariableList;
 
 typedef struct VariableList_tag {
 	Variable *variable;
-	VariableType type;
 	struct VariableList_tag *next;
 } VariableList;
 
 typedef struct Context_tag {
-	VariableList *variable_list;
+	TypedVariableList *variable_list;
 	struct Context_tag *outer;
+	VariableList *inner_variable_list;
 } Context;
 
 typedef enum {
@@ -139,7 +146,7 @@ Expression *create_binary_expression(ExpressionType type, Expression *left, Expr
 
 Expression *create_value_expression(Value *value);
 
-Expression *create_assign_expression(char *variable_name, Expression *operand);
+Expression *create_assign_expression(char *identifier, Expression *operand);
 
 Expression *create_block_expression(ExpressionList *expression_list);
 
@@ -149,19 +156,23 @@ Expression *create_identifier_expression(char *identifier);
 
 Expression *create_outer_expression(char const *const identifier);
 
+Expression *create_inner_assign_expression(char const *const identifier, Expression const *const expression);
+
 Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list);
 
 Variable *create_variable(char const *const name);
 
 Context *create_context(void);
 
-Value *eval(Context *context, Expression *expression);
+Value *eval(Context const *context, Expression const *expression);
 
 void print_value(Value *value);
 
 void set_compile_script(Script *script);
 
 Script *get_compile_script(void);
+
+void add_inner_variable(Context *const context, Variable *const variable);
 
 Variable *add_outer_variable(Context *const context, char const *const name);
 

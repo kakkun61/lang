@@ -62,7 +62,7 @@ struct Expression_tag {
 		Value *value;
 		ExpressionPair const *pair;
 		Assign *assign;
-		char const const *identifier;
+		char const *identifier;
 		ExpressionList const *expression_list;
 		FunctionCall *function_call;
 	} u;
@@ -128,6 +128,13 @@ typedef struct {
  * @param start 初期値
  */
 #define GET_LAST(var, start) for ((var) = (start); (var)->next; (var) = (var)->next)
+
+/**
+ * @param var 変数名（構造体)
+ * @param start 初期値
+ * @param next 次を指し示す構造体のメンバー
+ */
+#define FOR(var, start, next) for ((var) = (start); (var); (var) = (var)->next)
 
 /* lang.c */
 Expression *create_expression(ExpressionType type);

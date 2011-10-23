@@ -1,2 +1,5 @@
 inner ten = func() 10.,
-ten().
+f0 = func() func() func() ten()...,
+f1 = f0(),
+f2 = f1(),
+f2().

@@ -340,7 +340,10 @@ Value *eval(Context *const context, Expression const *const expression) {
 		}
 	case INNER_ASSIGN:	// TODO
 		{
-			
+			Variable *var = create_variable(expression->u.assign->identifier);
+			add_inner_variable(context, var);
+			var->value = eval(context, expression->u.assign->operand);
+			return var->value;
 		}
 	default:
 		fprintf(stderr, "fail to eval: bad expression type: %d\n", expression->type);
@@ -486,6 +489,9 @@ Expression *create_inner_assign_expression(char const *const identifier, Express
 }
 
 void add_inner_variable(Context *const context, Variable *const variable) {
+	#ifdef DEBUG_LANG
+		d("add_inner_variable");
+	#endif
 	VariableList *crt, *vl;
 	crt = malloc(sizeof(VariableList));
 	crt->variable = variable;
@@ -531,6 +537,18 @@ void add_variable(Context *const context, Variable *const variable, VariableType
 }
 
 Variable *get_variable(Context const *const context, char const *const name) {// TODO
+	#ifdef DEBUG_LANG
+		d("get_variable");
+	#endif
+	Context const *outer;
+	FOR (outer, context, outer) {
+		VariableList *vl;
+		FOR (vl, outer->inner_variable_list, next) {
+			if (!strcmp(vl->variable->name, name)) {
+				return vl->variable;
+			}
+		}
+	}
 	if (context->variable_list) {
 		TypedVariableList *tvl;
 		for (tvl = context->variable_list; tvl; tvl = tvl->next) {

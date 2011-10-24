@@ -3,4 +3,4 @@ f = func()
 	a = 2,
 	outer a,
 	a.,
-f().
+puts(f()).

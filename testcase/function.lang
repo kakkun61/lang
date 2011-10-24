@@ -4,4 +4,4 @@ incr = func()
 	v = v + 1.,
 incr(),
 incr(),
-v.
+puts(v).

@@ -4,4 +4,4 @@ build_add = func(a, b)
 		outer b,
 		a + b..,
 ans3 = build_add(1, 2),
-ans3().
+puts(ans3()).

@@ -2,4 +2,4 @@ inner ten = func() 10.,
 f0 = func() func() func() ten()...,
 f1 = f0(),
 f2 = f1(),
-f2().
+puts(f2()).

@@ -4,4 +4,4 @@ mul = func(a, b)
 	a * b.,
 calc = func(f)
 	f(1, 2).,
-calc(add).
+puts(calc(add)).

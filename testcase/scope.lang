@@ -5,4 +5,4 @@ f = func()
 g = func(f)
 	a = 2,
 	f().,
-g(f).
+puts(g(f)).

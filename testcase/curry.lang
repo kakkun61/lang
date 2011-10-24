@@ -1,2 +1,2 @@
 add = func(a) func(b) outer a, a + b..,
-add(1)(2).
+puts(add(1)(2)).

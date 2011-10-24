@@ -36,6 +36,11 @@ typedef struct {
 	} u;
 } Value;
 
+typedef struct ValueList_tag {
+	Value *value;
+	struct ValueList_tag *next;
+} ValueList;
+
 typedef struct ExpressionPair_tag {
 	Expression const *left;
 	Expression const *right;
@@ -114,6 +119,7 @@ struct Function_tag {
 			Context const *context;
 		} foreign;
 		struct {
+			Value *(*function)(Context *const, ValueList *const);
 		} native;
 	} u;
 };
@@ -145,7 +151,9 @@ Value *create_float_point(double value);
 
 Value *create_integer(int value);
 
-Value *create_function(IdentifierList *parameter_list, Expression *expression);
+Value *create_foreign_function(IdentifierList *parameter_list, Expression *expression);
+
+Value *create_native_function(Value *(*function)(Context *const context, ValueList *const argument_list));
 
 ExpressionPair *create_expression_pair(Expression *left, Expression *right);
 
@@ -198,6 +206,13 @@ void add_expression(ExpressionList *expression_list, Expression *expression);
 IdentifierList *create_identifier_list(char *identifier);
 
 void add_identifier(IdentifierList *identifier_list, char *identifier);
+
+ValueList *create_value_list(Value *value);
+
+/**
+ * size に終端文字は含まない。
+ */
+int value2string(char *string, size_t size, const Value *value);
 
 void interpret(Script *script);
 

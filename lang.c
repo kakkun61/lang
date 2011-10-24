@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "lang.h"
+#include "builtin.h"
 
 #ifdef TEST
 #	include "debug.h"
@@ -15,7 +16,8 @@
 #	endif
 #endif
 
-int value2string(char *string, size_t size, const Value *value);
+static void prepare_builtin_function(Context *const context);
+static Function *create_function(FunctionType type);
 
 Expression *create_expression(ExpressionType type) {
 	#ifdef DEBUG_LANG
@@ -57,10 +59,16 @@ Value *create_integer(int value) {
 	return val;
 }
 
-Value *create_function(IdentifierList *parameter_list, Expression *expression) {
+static Function *create_function(FunctionType type) {
+	Function *func = malloc(sizeof(Function));
+	func->type = type;
+	return func;
+}
+
+Value *create_foreign_function(IdentifierList *parameter_list, Expression *expression) {
 	Value *val = create_value(FUNCTION);
 	#ifdef DEBUG_LANG
-		d("create_function");
+		d("create_foreign_function");
 	#endif
 	#ifdef TEST
 		if (expression->type != BLOCK) {
@@ -68,10 +76,16 @@ Value *create_function(IdentifierList *parameter_list, Expression *expression) {
 			exit(1);
 		}
 	#endif
-	val->u.function = malloc(sizeof(Function));
-	val->u.function->type = FOREIGN_FUNCTION;
+	val->u.function = create_function(FOREIGN_FUNCTION);
 	val->u.function->u.foreign.parameter_list = parameter_list;
 	val->u.function->u.foreign.expression = expression;
+	return val;
+}
+
+Value *create_native_function(Value *(*function)(Context *const, ValueList *const)) {
+	Value *val = create_value(FUNCTION);
+	val->u.function = create_function(NATIVE_FUNCTION);
+	val->u.function->u.native.function = function;
 	return val;
 }
 
@@ -139,6 +153,13 @@ Expression *create_function_call_expression(char *identifier, ExpressionList *ar
 	expr->u.function_call->identifier = identifier;
 	expr->u.function_call->argument_list = argument_list;
 	return expr;
+}
+
+ValueList *create_value_list(Value *value) {
+	ValueList *vl = malloc(sizeof(ValueList));
+	vl->value = value;
+	vl->next = NULL;
+	return vl;
 }
 
 #define BINEXP(op, left, right)\
@@ -290,12 +311,12 @@ Value *eval(Context *const context, Expression const *const expression) {
 				if (var->value->type == FUNCTION) {
 					Function *func;
 					func = var->value->u.function;
+					Context *fc;
+					fc = create_context();
+					fc->outer = func->u.foreign.context;
 					if (func->type == FOREIGN_FUNCTION) {
 						IdentifierList const *pl;
 						ExpressionList const *el;
-						Context *fc;
-						fc = create_context();
-						fc->outer = func->u.foreign.context;
 						for (pl = func->u.foreign.parameter_list, el = expression->u.function_call->argument_list;
 						     pl && el;
 						     pl = pl->next, el = el->next) {
@@ -313,8 +334,17 @@ Value *eval(Context *const context, Expression const *const expression) {
 						}
 						return eval(fc, func->u.foreign.expression);
 					} else if (func->type == NATIVE_FUNCTION) {
-						fprintf(stderr, "native function is not implemented\n");
-						exit(EXIT_FAILURE);
+						ValueList *vl, *vh;
+						ExpressionList const *el;
+						el = expression->u.function_call->argument_list;
+						if (el) {
+							vh = vl = create_value_list(eval(context, el->expression));
+							el = el->next;
+						}
+						for (; el; el = el->next, vl = vl->next) {
+							vl->next = create_value_list(eval(context, el->expression));
+						}
+						return func->u.native.function(fc, vh);
 					} else {
 						fprintf(stderr, "fail to eval: bad function type: %d\n", expression->type);
 						exit(1);
@@ -353,9 +383,6 @@ Value *eval(Context *const context, Expression const *const expression) {
 
 #undef BINEXP
 
-/**
- * size に終端文字は含まない。
- */
 int value2string(char *string, size_t size, const Value *value) {
 	switch (value->type) {
 	case INTEGER:
@@ -560,12 +587,20 @@ Variable *get_variable(Context const *const context, char const *const name) {//
 	return NULL;
 }
 
+static void prepare_builtin_function(Context *const context) {
+	Variable *var;
+	var = create_variable("puts");
+	var->value = create_native_function(lang_puts);
+	add_inner_variable(context, var);
+}
+
 void interpret(Script *script) {
 	#ifdef DEBUG_LANG
 	d("interpret");
 	#endif
 	ExpressionList *el;
 	char str[80];
+	prepare_builtin_function(script->global_context);
 	value2string(str, sizeof(str), eval(script->global_context, script->expression));
 	printf("%s\n", str);
 }

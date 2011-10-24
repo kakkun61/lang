@@ -189,13 +189,13 @@ function_definition_expression:
 		#ifdef DEBUG_PARSER
 			d("function_definition_expression: FUNC_TOKEN LP RP block");
 		#endif
-		$$ = create_value_expression(create_function(NULL, $4));
+		$$ = create_value_expression(create_foreign_function(NULL, $4));
 	}
 	| FUNC_TOKEN LP identifier_list RP block {
 		#ifdef DEBUG_PARSER
 			d("function_definition_expression: FUNC_TOKEN LP identifier_list RP block");
 		#endif
-		$$ = create_value_expression(create_function($3, $5));
+		$$ = create_value_expression(create_foreign_function($3, $5));
 	};
 identifier_list:
 	IDENTIFIER_TOKEN {

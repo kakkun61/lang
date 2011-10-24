@@ -25,6 +25,7 @@ typedef enum {
 	INTEGER,
 	FLOAT,
 	FUNCTION,
+	NULL_VALUE
 } ValueType;
 
 typedef struct {

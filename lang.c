@@ -409,6 +409,8 @@ int value2string(char *string, size_t size, const Value *value) {
 			n++;
 			return n;
 		}
+	case NULL_VALUE:
+		return snprintf(string, size, "null");
 	default:
 		fprintf(stderr, "bad value type: %d\n", value->type);
 		exit(1);

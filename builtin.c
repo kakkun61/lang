@@ -9,6 +9,6 @@ Value *lang_puts(Context *const context, ValueList *const argument_list) {
 		value2string(str, 80, vl->value);
 		printf("%s\n", str);
 	}
-	return NULL; // TODO null を実装したらそれを返す
+	return create_value(NULL_VALUE);
 }
 

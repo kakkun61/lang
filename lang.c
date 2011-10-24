@@ -600,11 +600,8 @@ void interpret(Script *script) {
 	#ifdef DEBUG_LANG
 	d("interpret");
 	#endif
-	ExpressionList *el;
-	char str[80];
 	prepare_builtin_function(script->global_context);
-	value2string(str, sizeof(str), eval(script->global_context, script->expression));
-	printf("%s\n", str);
+	eval(script->global_context, script->expression);
 }
 
 int compile(FILE *input) {

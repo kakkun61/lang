@@ -2,6 +2,7 @@
 #define LANG_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef struct Expression_tag Expression;
 
@@ -24,6 +25,7 @@ typedef enum {
 typedef enum {
 	INTEGER,
 	FLOAT,
+	BOOLEAN,
 	FUNCTION,
 	NULL_VALUE
 } ValueType;
@@ -33,6 +35,7 @@ typedef struct {
 	union {
 		double float_point;
 		int integer;
+		bool boolean;
 		Function *function;
 	} u;
 } Value;
@@ -151,6 +154,8 @@ Value *create_value(ValueType type);
 Value *create_float_point(double value);
 
 Value *create_integer(int value);
+
+Value *create_boolean(bool boolean);
 
 Value *create_foreign_function(IdentifierList *parameter_list, Expression *expression);
 

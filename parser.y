@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "lang.h"
 
 #ifdef DEBUG
@@ -36,6 +37,8 @@ int yyerror(char const *str);
        FUNC_TOKEN
        OUTER_TOKEN
        INNER_TOKEN
+       TRUE_TOKEN
+       FALSE_TOKEN
 %type <expression_list> expression_list
 %type <expression> expression
                    additive_expression
@@ -171,6 +174,18 @@ primary_expression:
 			d("primary_expression: FLOAT_POINT_LITERAL");
 		#endif
 		$$ = create_value_expression(create_float_point($1));
+	}
+	| TRUE_TOKEN {
+		#ifdef DEBUG_PARSER
+			d("primary_expression: TRUE_TOKEN");
+		#endif
+		$$ = create_value_expression(create_boolean(true));
+	}
+	| FALSE_TOKEN {
+		#ifdef DEBUG_PARSER
+			d("primary_expression: FALSE_TOKEN");
+		#endif
+		$$ = create_value_expression(create_boolean(false));
 	}
 	| LP expression RP {
 		#ifdef DEBUG_PARSER

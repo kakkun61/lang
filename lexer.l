@@ -21,6 +21,8 @@ int yywrap(void) {
 func return FUNC_TOKEN;
 outer return OUTER_TOKEN;
 inner return INNER_TOKEN;
+true return TRUE_TOKEN;
+false return FALSE_TOKEN;
 ([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);

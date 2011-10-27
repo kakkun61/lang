@@ -59,6 +59,15 @@ Value *create_integer(int value) {
 	return val;
 }
 
+Value *create_boolean(bool value) {
+	#ifdef DEBUG_LANG
+	d("create_boolean(%d)", value);
+	#endif
+	Value *val = create_value(BOOLEAN);
+	val->u.boolean = value;
+	return val;
+}
+
 static Function *create_function(FunctionType type) {
 	Function *func = malloc(sizeof(Function));
 	func->type = type;
@@ -408,6 +417,15 @@ int value2string(char *string, size_t size, const Value *value) {
 			strncat(string, ")", size - n);
 			n++;
 			return n;
+		}
+	case BOOLEAN:
+		{
+			switch (value->u.boolean) {
+			case true:
+				return snprintf(string, size, "true");
+			case false:
+				return snprintf(string, size, "false");
+			}
 		}
 	case NULL_VALUE:
 		return snprintf(string, size, "null");

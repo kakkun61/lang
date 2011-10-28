@@ -1,0 +1,9 @@
+if (false)
+	puts(1).
+elif (false)
+	puts(2).
+elif (false)
+	puts(3).
+else
+	puts(4)..
+

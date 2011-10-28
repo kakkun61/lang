@@ -19,7 +19,8 @@ typedef enum {
 	FUNCTION_CALL,
 	BLOCK,
 	OUTER,
-	INNER_ASSIGN
+	INNER_ASSIGN,
+	IF
 } ExpressionType;
 
 typedef enum {
@@ -65,6 +66,12 @@ typedef struct {
 	ExpressionList const *argument_list;
 } FunctionCall;
 
+typedef struct If_tag {
+	Expression const *condition;
+	Expression const *then;
+	struct If_tag *elif;
+} If;
+
 struct Expression_tag {
 	ExpressionType type;
 	union {
@@ -74,6 +81,7 @@ struct Expression_tag {
 		char const *identifier;
 		ExpressionList const *expression_list;
 		FunctionCall *function_call;
+		If *lang_if;
 	} u;
 };
 
@@ -136,13 +144,14 @@ typedef struct {
 /**
  * @param var 変数名
  * @param start 初期値
+ * @param next 構造体の、次を指し示すメンバー
  */
-#define GET_LAST(var, start) for ((var) = (start); (var)->next; (var) = (var)->next)
+#define GET_LAST(var, start, next) for ((var) = (start); (var)->next; (var) = (var)->next)
 
 /**
  * @param var 変数名（構造体)
  * @param start 初期値
- * @param next 次を指し示す構造体のメンバー
+ * @param next 構造体の、次を指し示すメンバー
  */
 #define FOR(var, start, next) for ((var) = (start); (var); (var) = (var)->next)
 
@@ -181,11 +190,19 @@ Expression *create_inner_assign_expression(char const *const identifier, Express
 
 Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list);
 
+Expression *create_if_expression(Expression const *const condition, Expression const *const then, If *const if_expression);
+
+If *create_if(Expression const *const condition, Expression const *const then, If *const if_expression);
+
+void add_if(If *head, If *elif);
+
 Variable *create_variable(char const *const name);
 
 Context *create_context(void);
 
 Value *eval(Context *const context, Expression const *const expression);
+
+Value *eval_if(Context *const context, If const *const lang_if);
 
 void print_value(Value *value);
 

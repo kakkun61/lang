@@ -377,12 +377,19 @@ Value *eval(Context *const context, Expression const *const expression) {
 				exit(EXIT_FAILURE);
 			}
 		}
-	case INNER_ASSIGN:	// TODO
+	case INNER_ASSIGN:
 		{
 			Variable *var = create_variable(expression->u.assign->identifier);
 			add_inner_variable(context, var);
 			var->value = eval(context, expression->u.assign->operand);
 			return var->value;
+		}
+	case IF:
+		{
+			#ifdef DEBUG_LANG
+				d("IF");
+			#endif
+			return eval_if(context, expression->u.lang_if);	
 		}
 	default:
 		fprintf(stderr, "fail to eval: bad expression type: %d\n", expression->type);
@@ -391,6 +398,27 @@ Value *eval(Context *const context, Expression const *const expression) {
 }
 
 #undef BINEXP
+
+Value *eval_if(Context *const context, If const *const lang_if) {
+	#ifdef DEBUG_LANG
+		d("eval_if");
+	#endif
+	Value *val = NULL;
+	if (lang_if->condition) {
+		val = eval(context, lang_if->condition);
+		if (val->type != BOOLEAN) {
+			fprintf(stderr, "a type of a condition of \"if\" must be boolean.\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (!lang_if->condition || val->u.boolean) {
+		return eval(context, lang_if->then);
+	} else if (lang_if->elif) {
+		return eval_if(context, lang_if->elif);
+	}
+	fprintf(stderr, "mustn't come here.");
+	exit(EXIT_FAILURE);
+}
 
 int value2string(char *string, size_t size, const Value *value) {
 	switch (value->type) {
@@ -535,6 +563,26 @@ Expression *create_inner_assign_expression(char const *const identifier, Express
 	return create_assign_sub(INNER_ASSIGN, identifier, expression);
 }
 
+Expression *create_if_expression(Expression const *const condition, Expression const *const then, If *const elif) {
+	Expression *expr = create_expression(IF);
+	expr->u.lang_if = create_if(condition, then, elif);
+	return expr;
+}
+
+If *create_if(Expression const *const condition, Expression const *const then, If *const elif) {
+	If *if_ = malloc(sizeof(If));
+	if_->condition = condition;
+	if_->then = then;
+	if_->elif = elif;
+	return if_;
+}
+
+void add_if(If *head, If *elif) {
+	If *if_;
+	GET_LAST(if_, head, elif);
+	if_->elif = elif;
+}
+
 void add_inner_variable(Context *const context, Variable *const variable) {
 	#ifdef DEBUG_LANG
 		d("add_inner_variable");
@@ -544,7 +592,7 @@ void add_inner_variable(Context *const context, Variable *const variable) {
 	crt->variable = variable;
 	crt->next = NULL;
 	if (context->inner_variable_list) {
-		GET_LAST(vl, context->inner_variable_list);
+		GET_LAST(vl, context->inner_variable_list, next);
 		vl->next = crt;
 	} else {
 		context->inner_variable_list = crt;
@@ -583,7 +631,7 @@ void add_variable(Context *const context, Variable *const variable, VariableType
 	}
 }
 
-Variable *get_variable(Context const *const context, char const *const name) {// TODO
+Variable *get_variable(Context const *const context, char const *const name) {
 	#ifdef DEBUG_LANG
 		d("get_variable");
 	#endif

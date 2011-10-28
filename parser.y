@@ -9,6 +9,10 @@
 #	include "debug.h"
 #endif
 
+#ifdef DEBUG_PARSER
+#	include "debug.h"
+#endif
+
 #define YYDEBUG 1
 
 int yyerror(char const *str);
@@ -20,6 +24,7 @@ int yyerror(char const *str);
 	Expression *expression;
 	ExpressionList *expression_list;
 	IdentifierList *identifier_list;
+	If *lang_if;
 }
 %token <integer> INTEGER_LITERAL
 %token <float_point> FLOAT_POINT_LITERAL
@@ -39,6 +44,9 @@ int yyerror(char const *str);
        INNER_TOKEN
        TRUE_TOKEN
        FALSE_TOKEN
+       IF_TOKEN
+       ELSE_TOKEN
+       ELIF_TOKEN
 %type <expression_list> expression_list
 %type <expression> expression
                    additive_expression
@@ -48,7 +56,12 @@ int yyerror(char const *str);
                    block
                    function_definition_expression
                    function_call_expression
+                   if_expression
 %type <identifier_list> identifier_list
+%type <lang_if> elif_list
+                else_kind
+                else
+                elif
 %%
 root_expression:
 	block {
@@ -116,7 +129,8 @@ expression:
 		$$ = create_inner_assign_expression($2, $4);
 	}
 	| function_definition_expression
-	| function_call_expression;
+	| function_call_expression
+	| if_expression;
 additive_expression:
 	multiplicative_expression {
 		#ifdef DEBUG_PARSER
@@ -232,6 +246,64 @@ function_call_expression:
 			d("function_call_expression: IDENTIFIER_TOKEN LP expression_list RP");
 		#endif
 		$$ = create_function_call_expression($1, $3);
+	};
+if_expression:
+	IF_TOKEN LP expression RP block {
+		#ifdef DEBUG_PARSER
+			d("if_expression: IF_TOKEN LP expression RP block");
+		#endif
+		$$ = create_if_expression($3, $5, NULL);
+	}
+	| IF_TOKEN LP expression RP block else_kind {
+		#ifdef DEBUG_PARSER
+			d("if_expression: IF_TOKEN LP expression RP block else_kind");
+		#endif
+		$$ = create_if_expression($3, $5, $6);
+	};
+else:
+	ELSE_TOKEN block {
+		#ifdef DEBUG_PARSER
+			d("else: ELSE_TOKEN block");
+		#endif
+		$$ = create_if(NULL, $2, NULL);
+	};
+else_kind:
+	else {
+		#ifdef DEBUG_PARSER
+			d("else_kind: else");
+		#endif
+	}
+	| elif_list {
+		#ifdef DEBUG_PARSER
+			d("else_kind: elif_list");
+		#endif
+	}
+	| elif_list else {
+		#ifdef DEBUG_PARSER
+			d("else_kind: elif_list else");
+		#endif
+		add_if($1, $2);
+		$$ = $1;
+	};
+elif_list:
+	elif {
+		#ifdef DEBUG_PARSER
+			d("elif_list: elif");
+		#endif
+	}
+	| elif_list elif {
+		#ifdef DEBUG_PARSER
+			d("elif_list: elif_list elif");
+		#endif
+		add_if($1, $2);
+		$$ = $1;
+	};
+elif:
+	ELIF_TOKEN LP expression RP block {
+		#ifdef DEBUG_PARSER
+			d("elif: ELIF_TOKEN LP expression RP block");
+		#endif
+		$$ = create_if($3, $5, NULL);
 	};
 %%
 int yyerror(char const *str) {

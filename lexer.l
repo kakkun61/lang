@@ -23,6 +23,9 @@ outer return OUTER_TOKEN;
 inner return INNER_TOKEN;
 true return TRUE_TOKEN;
 false return FALSE_TOKEN;
+if return IF_TOKEN;
+else return ELSE_TOKEN;
+elif return ELIF_TOKEN;
 ([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);

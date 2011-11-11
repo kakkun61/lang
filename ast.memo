@@ -1,1 +1,8 @@
-
+enum ExpressionType
+struct Expression
+struct If
+struct IdentifierList
+struct ExpressionList
+struct ExpressionPair
+struct Assign
+struct FunctionCall

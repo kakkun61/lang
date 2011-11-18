@@ -1,5 +1,9 @@
 struct Script
+typedef struct ValueList // incomplete type
 
 create_script
+set_compile_script
+get_compile_script
+add_native_function(Script, char*, Value *(*)(Context*, ValueList*))
 interpret
 compile

@@ -4,7 +4,6 @@ create_float_point
 create_integer
 create_boolean
 create_foreign_function
-create_native_function
 create_expression_pair
 create_binary_expression
 create_value_expression
@@ -18,8 +17,6 @@ create_function_call_expression
 create_if_expression
 create_if
 add_if
-create_variable
-create_context
 create_expression_list
 add_expression
 create_identifier_list

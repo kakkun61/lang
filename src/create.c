@@ -1,5 +1,13 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "ast.h"
 #include "create.h"
+#include "list-util.h"
+
+#ifdef DEBUG
+#	include "debug.h"
+#endif
 
 Expression *create_expression(ExpressionType type) {
 	#ifdef DEBUG_CREATE
@@ -50,7 +58,7 @@ Value *create_boolean(bool value) {
 	return val;
 }
 
-static Function *create_function(FunctionType type) {
+Function *create_function(FunctionType type) {
 	Function *func = malloc(sizeof(Function));
 	func->type = type;
 	return func;
@@ -226,19 +234,5 @@ Expression *create_inner_assign_expression(char const *const identifier, Express
 		d("create_inner_expression");
 	#endif
 	return create_assign_sub(INNER_ASSIGN, identifier, expression);
-}
-
-Expression *create_if_expression(Expression const *const condition, Expression const *const then, If *const elif) {
-	Expression *expr = create_expression(IF);
-	expr->u.lang_if = create_if(condition, then, elif);
-	return expr;
-}
-
-If *create_if(Expression const *const condition, Expression const *const then, If *const elif) {
-	If *if_ = malloc(sizeof(If));
-	if_->condition = condition;
-	if_->then = then;
-	if_->elif = elif;
-	return if_;
 }
 

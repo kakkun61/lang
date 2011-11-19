@@ -1,6 +1,84 @@
 #pragma once
 
+#include <stdbool.h>
+
 typedef struct Expression_tag Expression;
+
+typedef struct Function_tag Function;
+
+typedef struct IdentifierList_tag {
+	char const *identifier;
+	struct IdentifierList_tag *next;
+} IdentifierList;
+
+typedef enum {
+	INTEGER,
+	FLOAT,
+	BOOLEAN,
+	FUNCTION,
+	NULL_VALUE
+} ValueType;
+
+typedef struct {
+	ValueType type;
+	union {
+		double float_point;
+		int integer;
+		bool boolean;
+		Function *function;
+	} u;
+} Value;
+
+typedef struct ValueList_tag {
+	Value *value;
+	struct ValueList_tag *next;
+} ValueList;
+
+typedef struct {
+	char const *name;
+	Value *value;
+} Variable;
+
+typedef struct VariableList_tag {
+	Variable *variable;
+	struct VariableList_tag *next;
+} VariableList;
+
+typedef enum {
+	LOCAL_VARIABLE,
+	OUTER_VARIABLE,
+} VariableType;
+
+typedef struct TypedVariableList_tag {
+	Variable *variable;
+	VariableType type;
+	struct TypedVariableList_tag *next;
+} TypedVariableList;
+
+typedef struct Context_tag {
+	TypedVariableList *variable_list;
+	struct Context_tag const *outer;
+	VariableList *inner_variable_list;
+} Context;
+
+typedef enum {
+	FOREIGN_FUNCTION,
+	NATIVE_FUNCTION,
+} FunctionType;
+
+struct Function_tag {
+	FunctionType type;
+	union {
+		struct {
+			IdentifierList const *parameter_list;
+			Expression const *expression;
+			Context const *context;
+		} foreign;
+		struct {
+			Value *(*function)(Context *const, ValueList *const);
+		} native;
+	} u;
+};
 
 typedef enum {
 	VALUE,
@@ -55,9 +133,4 @@ struct Expression_tag {
 		If *lang_if;
 	} u;
 };
-
-typedef struct IdentifierList_tag {
-	char const *identifier;
-	struct IdentifierList_tag *next;
-} IdentifierList;
 

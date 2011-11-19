@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdio.h>
 
 #ifdef DEBUG
@@ -6,7 +7,6 @@
 #endif
 
 typedef struct Script_tag Script;
-typedef struct ValueList_tag ValueList;
 
 int compile(FILE *input);
 void interpret(Script *script);

@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
-#include "lang.h" // y.tab.h には、lang.h のインクルードがないようなので書いておく
+#include "ast.h" // y.tab.h には、ast.h のインクルードがないようなので書いておく
+#include "create.h"
 #include "y.tab.h"
 
 int yywrap(void) {

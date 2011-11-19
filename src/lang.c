@@ -1,16 +1,18 @@
 #include <stdio.h>
 #include "lang.h"
 #include "eval.h"
+#include "builtin.h"
+
+#ifdef DEBUG
+#	include "debug.h"
+#endif
 
 struct Script_tag {
 	Expression *expression;
 	Context *global_context;
 };
 
-struct ValueList_tag {
-	Value *value;
-	struct ValueList_tag *next;
-};
+Script *compile_script;
 
 void set_compile_script(Script *script) {
 	compile_script = script;
@@ -48,4 +50,8 @@ int compile(FILE *input) {
 
 	yyin = input;
 	return yyparse();
+}
+
+void set_expression(Script *const script, Expression *const expression) {
+	script->expression = expression;
 }

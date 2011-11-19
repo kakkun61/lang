@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ast.h"
+
 #ifdef DEBUG
 #	define DEBUG_CREATE
 #endif
@@ -30,3 +32,4 @@ Value *create_integer(int value);
 Value *create_float_point(double value);
 Value *create_value(ValueType type);
 Expression *create_expression(ExpressionType type);
+Function *create_function(FunctionType type);

@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "ast.h"
+#include "builtin.h"
+#include "create.h"
+#include "debug.h"
+#include "eval.h"
 #include "lang.h"
 
 #ifdef DEBUG
@@ -68,7 +73,8 @@ root_expression:
 		#ifdef DEBUG_PARSER
 			d("root_expression: block");
 		#endif
-		get_compile_script()->expression = $1;
+		set_expression(get_compile_script(), $1);
+		// get_compile_script()->expression = $1;
 	};
 block:
 	expression_list DOT {

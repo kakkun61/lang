@@ -1,1 +1,1 @@
-gcc -o bin/lang lang.c builtin.c y.tab.c lex.yy.c main.c
+gcc -o bin/lang src/lang.c src/builtin.c src/main.c src/create.c src/eval.c src/y.tab.c src/lex.yy.c

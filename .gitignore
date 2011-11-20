@@ -4,3 +4,5 @@ y.tab.*
 lex.yy.c
 *~
 #*#
+src/Doxyfile
+src/html

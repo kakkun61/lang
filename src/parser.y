@@ -44,6 +44,12 @@ int yyerror(char const *str);
        COMMA
        DOT
        SEMICOLON
+       EQ
+       NE
+       GR
+       GE
+       LS
+       LE
        FUNC_TOKEN
        OUTER_TOKEN
        INNER_TOKEN
@@ -54,6 +60,10 @@ int yyerror(char const *str);
        ELIF_TOKEN
 %type <expression_list> expression_list
 %type <expression> expression
+                   logical_or_expression
+                   logical_and_expression
+                   equality_expression
+                   relational_expression
                    additive_expression
                    multiplicative_expression
                    unary_expression
@@ -110,12 +120,7 @@ expression_list:
 		$$ = $1;
 	};
 expression:
-	additive_expression {
-		#ifdef DEBUG_PARSER
-			d("expression: additive_expression");
-		#endif
-		$$ = $1;
-	}
+	logical_or_expression
 	| IDENTIFIER_TOKEN ASSIGN_TOKEN expression {
 		#ifdef DEBUG_PARSER
 			d("expression: IDENTIFIER_TOKEN ASSIGN_TOKEN expression");
@@ -137,6 +142,32 @@ expression:
 	| function_definition_expression
 	| function_call_expression
 	| if_expression;
+logical_or_expression:
+	logical_and_expression;
+logical_and_expression:
+	equality_expression;
+equality_expression:
+	relational_expression
+	| equality_expression EQ relational_expression {
+		$$ = create_binary_expression(EQUAL, $1, $3);
+	}
+	| equality_expression NE relational_expression {
+		$$ = create_binary_expression(NOT_EQUAL, $1, $3);
+	};
+relational_expression:
+	additive_expression
+	| relational_expression GR additive_expression {
+		$$ = create_binary_expression(GRATER, $1, $3);
+	}
+	| relational_expression GE additive_expression {
+		$$ = create_binary_expression(GRATER_EQUAL, $1, $3);
+	}
+	| relational_expression LS additive_expression {
+		$$ = create_binary_expression(LESS, $1, $3);
+	}
+	| relational_expression LE additive_expression {
+		$$ = create_binary_expression(LESS_EQUAL, $1, $3);
+	};
 additive_expression:
 	multiplicative_expression {
 		#ifdef DEBUG_PARSER

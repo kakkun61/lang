@@ -9,7 +9,7 @@
 #	include "debug.h"
 #endif
 
-#define BINEXP(op, left, right)\
+#define ADDEXP(op, left, right)\
 	({\
 		Value *tmp;\
 		switch ((left)->type) {\
@@ -25,6 +25,9 @@
 						(left)->u.float_point op (right)->u.integer\
 				);\
 				break;\
+			default:\
+				fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+				exit(EXIT_FAILURE);\
 			}\
 			break;\
 		case INTEGER:\
@@ -39,8 +42,116 @@
 						(left)->u.integer op (right)->u.integer\
 				);\
 				break;\
+			default:\
+				fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+				exit(EXIT_FAILURE);\
 			}\
 			break;\
+		default:\
+			fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+			exit(EXIT_FAILURE);\
+		}\
+		tmp;\
+	})
+
+#define EQEXP(op, left, right)\
+	({\
+		Value *tmp;\
+		switch ((left)->type) {\
+		case FLOAT:\
+			switch ((right)->type) {\
+			case FLOAT:\
+				tmp = create_boolean(\
+						(left)->u.float_point op (right)->u.float_point\
+				);\
+				break;\
+			case INTEGER:\
+				tmp = create_boolean(\
+						(left)->u.float_point op (right)->u.integer\
+				);\
+				break;\
+			default:\
+				fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+				exit(EXIT_FAILURE);\
+			}\
+			break;\
+		case INTEGER:\
+			switch ((right)->type) {\
+			case FLOAT:\
+				tmp = create_boolean(\
+						(left)->u.integer op (right)->u.float_point\
+				);\
+				break;\
+			case INTEGER:\
+				tmp = create_boolean(\
+						(left)->u.integer op (right)->u.integer\
+				);\
+				break;\
+			default:\
+				fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+				exit(EXIT_FAILURE);\
+			}\
+			break;\
+		case BOOLEAN:\
+			switch ((right)->type) {\
+			case BOOLEAN:\
+				tmp = create_boolean(\
+						(left)->u.boolean op (right)->u.boolean\
+				);\
+				break;\
+			default:\
+				fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+				exit(EXIT_FAILURE);\
+			}\
+			break;\
+		default:\
+			fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+			exit(EXIT_FAILURE);\
+		}\
+		tmp;\
+	})
+
+#define RELEXP(op, left, right)\
+	({\
+		Value *tmp;\
+		switch ((left)->type) {\
+		case FLOAT:\
+			switch ((right)->type) {\
+			case FLOAT:\
+				tmp = create_boolean(\
+						(left)->u.float_point op (right)->u.float_point\
+				);\
+				break;\
+			case INTEGER:\
+				tmp = create_boolean(\
+						(left)->u.float_point op (right)->u.integer\
+				);\
+				break;\
+			default:\
+				fprintf(stderr, "failed to eval: bad value type \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+				exit(EXIT_FAILURE);\
+			}\
+			break;\
+		case INTEGER:\
+			switch ((right)->type) {\
+			case FLOAT:\
+				tmp = create_boolean(\
+						(left)->u.integer op (right)->u.float_point\
+				);\
+				break;\
+			case INTEGER:\
+				tmp = create_boolean(\
+						(left)->u.integer op (right)->u.integer\
+				);\
+				break;\
+			default:\
+				fprintf(stderr, "failed to eval: bad value type \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+				exit(EXIT_FAILURE);\
+			}\
+			break;\
+		default:\
+			fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
+			exit(EXIT_FAILURE);\
 		}\
 		tmp;\
 	})
@@ -71,6 +182,12 @@ Value *eval(Context *const context, Expression const *const expression) {
 	case SUB:
 	case MUL:
 	case DIV:
+	case EQUAL:
+	case NOT_EQUAL:
+	case GRATER:
+	case GRATER_EQUAL:
+	case LESS:
+	case LESS_EQUAL:
 		{
 			Value const *left;
 			Value const *right;
@@ -81,13 +198,25 @@ Value *eval(Context *const context, Expression const *const expression) {
 			right = eval(context, expression->u.pair->right);
 			switch (expression->type) {
 			case ADD:
-				return BINEXP(+, left, right);
+				return ADDEXP(+, left, right);
 			case SUB:
-				return BINEXP(-, left, right);
+				return ADDEXP(-, left, right);
 			case MUL:
-				return BINEXP(*, left, right);
+				return ADDEXP(*, left, right);
 			case DIV:
-				return BINEXP(/, left, right);
+				return ADDEXP(/, left, right);
+			case EQUAL:
+				return EQEXP(==, left, right);
+			case NOT_EQUAL:
+				return EQEXP(!=, left, right);
+			case GRATER:
+				return RELEXP(>,left, right);
+			case GRATER_EQUAL:
+				return RELEXP(>=,left, right);
+			case LESS:
+				return RELEXP(<,left, right);
+			case LESS_EQUAL:
+				return RELEXP(<=,left, right);
 			}
 		}
 	case ASSIGN:
@@ -235,7 +364,9 @@ Value *eval(Context *const context, Expression const *const expression) {
 	}
 }
 
-#undef BINEXP
+#undef ADDEXP
+#undef EQEXP
+#undef RELEXP
 
 Value *eval_if(Context *const context, If const *const lang_if) {
 	#ifdef DEBUG_EVAL

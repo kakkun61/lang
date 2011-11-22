@@ -19,6 +19,12 @@ int yywrap(void) {
 "," return COMMA;
 "." return DOT;
 ";" return SEMICOLON;
+"==" return EQ;
+"!=" return NE;
+">=" return GE;
+">" return GR;
+"<=" return LE;
+"<" return LS;
 func return FUNC_TOKEN;
 outer return OUTER_TOKEN;
 inner return INNER_TOKEN;

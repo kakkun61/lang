@@ -18,7 +18,6 @@ int yywrap(void) {
 "=" return ASSIGN_TOKEN;
 "," return COMMA;
 "." return DOT;
-";" return SEMICOLON;
 "==" return EQ;
 "!=" return NE;
 ">=" return GE;

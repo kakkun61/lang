@@ -43,7 +43,6 @@ int yyerror(char const *str);
        ASSIGN_TOKEN
        COMMA
        DOT
-       SEMICOLON
        EQ
        NE
        GR
@@ -283,7 +282,7 @@ function_call_expression:
 			d("function_call_expression: IDENTIFIER_TOKEN LP expression_list RP");
 		#endif
 		$$ = create_function_call_expression($1, $3);
-	};
+	}
 if_expression:
 	IF_TOKEN LP expression RP block {
 		#ifdef DEBUG_PARSER

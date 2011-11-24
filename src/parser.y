@@ -50,6 +50,7 @@ int yyerror(char const *str);
        LS
        LE
        FUNC_TOKEN
+       SELF_TOKEN
        OUTER_TOKEN
        INNER_TOKEN
        TRUE_TOKEN
@@ -245,7 +246,7 @@ primary_expression:
 	}
 	| IDENTIFIER_TOKEN {
 		#ifdef DEBUG_PARSER
-			d("primary_literal: IDENTIFIER_TOKEN");
+			d("primary_expression: IDENTIFIER_TOKEN");
 		#endif
 		$$ = create_identifier_expression($1);
 	};
@@ -283,6 +284,18 @@ function_call_expression:
 		#endif
 		$$ = create_function_call_expression($1, $3);
 	}
+	| SELF_TOKEN LP RP {
+		#ifdef DEBUG_PARSER
+			d("function_call_expression: SELF_TOKEN LP RP");
+		#endif
+		$$ = create_function_call_expression(create_identifier(SELF), NULL);
+	}
+	| SELF_TOKEN LP expression_list RP {
+		#ifdef DEBUG_PARSER
+			d("function_call_expression: SELF_TOKEN LP expression_list RP");
+		#endif
+		$$ = create_function_call_expression(create_identifier(SELF), $3);
+	};
 if_expression:
 	IF_TOKEN LP expression RP block {
 		#ifdef DEBUG_PARSER

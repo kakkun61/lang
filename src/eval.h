@@ -7,6 +7,8 @@
 #	define DEBUG_EVAL
 #endif
 
+#define SELF "self"
+
 void add_variable(Context *const context,Variable *const variable,VariableType const type);
 Value *eval_if(Context *const context,If const *const lang_if);
 void add_inner_variable(Context *const context,Variable *const variable);

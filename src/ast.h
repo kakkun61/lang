@@ -59,6 +59,7 @@ typedef struct Context_tag {
 	TypedVariableList *variable_list;
 	struct Context_tag const *outer;
 	VariableList *inner_variable_list;
+	Function const *self;
 } Context;
 
 typedef enum {

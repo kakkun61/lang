@@ -9,6 +9,34 @@
 #	include "debug.h"
 #endif
 
+static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func) {
+	#ifdef DEBUG_EVAL
+		d("eval_foreign_function %s", name);
+	#endif
+	Context *fc;
+	fc = create_context();
+	fc->outer = func->u.foreign.context;
+	fc->self = func;
+	IdentifierList const *pl;
+	ExpressionList const *el;
+	for (pl = func->u.foreign.parameter_list, el = expression->u.function_call->argument_list;
+		 pl && el;
+		 pl = pl->next, el = el->next) {
+		Variable *var = create_variable(pl->identifier);
+		var->value = eval(context, el->expression);
+		add_local_variable(fc, var);
+	}
+	if (pl) {
+		fprintf(stderr, "fail to eval: too few parameters: %s\n", name);
+		exit(EXIT_FAILURE);
+	}
+	if (el) {
+		fprintf(stderr, "fail to eval: too few arguments: %s\n", name);
+		exit(EXIT_FAILURE);
+	}
+	return eval(fc, func->u.foreign.expression);
+}
+
 #define ADDEXP(op, left, right)\
 	({\
 		Value *tmp;\
@@ -280,50 +308,36 @@ Value *eval(Context *const context, Expression const *const expression) {
 		{
 			Variable *var;
 			#ifdef DEBUG_EVAL
-				d("FUNCTION_CALL");
+				d("FUNCTION_CALL %s", expression->u.function_call->identifier);
 			#endif
-			var = get_variable(context, expression->u.function_call->identifier);
-			if (var) {
-				if (var->value->type == FUNCTION) {
-					Function *func;
-					func = var->value->u.function;
-					Context *fc;
-					fc = create_context();
-					fc->outer = func->u.foreign.context;
-					if (func->type == FOREIGN_FUNCTION) {
-						IdentifierList const *pl;
-						ExpressionList const *el;
-						for (pl = func->u.foreign.parameter_list, el = expression->u.function_call->argument_list;
-						     pl && el;
-						     pl = pl->next, el = el->next) {
-							Variable *var = create_variable(pl->identifier);
-							var->value = eval(context, el->expression);
-							add_local_variable(fc, var);
+			if (!strcmp(SELF, expression->u.function_call->identifier)) {
+				d("%s %s", SELF, expression->u.function_call->identifier);
+				return eval_foreign_function(context, expression, SELF, context->self);
+			} else {
+				var = get_variable(context, expression->u.function_call->identifier);
+				if (var) {
+					if (var->value->type == FUNCTION) {
+						Function *func;
+						func = var->value->u.function;
+						if (func->type == FOREIGN_FUNCTION) {
+							return eval_foreign_function(context, expression, var->name, func);
+						} else if (func->type == NATIVE_FUNCTION) {
+							Context *const fc = create_context();
+							ValueList *vl, *vh;
+							ExpressionList const *el;
+							el = expression->u.function_call->argument_list;
+							if (el) {
+								vh = vl = create_value_list(eval(context, el->expression));
+								el = el->next;
+							}
+							for (; el; el = el->next, vl = vl->next) {
+								vl->next = create_value_list(eval(context, el->expression));
+							}
+							return func->u.native.function(fc, vh);
+						} else {
+							fprintf(stderr, "fail to eval: bad function type: %d\n", expression->type);
+							exit(1);
 						}
-						if (pl) {
-							fprintf(stderr, "fail to eval: too few parameters: %s\n", var->name);
-							exit(EXIT_FAILURE);
-						}
-						if (el) {
-							fprintf(stderr, "fail to eval: too few arguments: %s\n", var->name);
-							exit(EXIT_FAILURE);
-						}
-						return eval(fc, func->u.foreign.expression);
-					} else if (func->type == NATIVE_FUNCTION) {
-						ValueList *vl, *vh;
-						ExpressionList const *el;
-						el = expression->u.function_call->argument_list;
-						if (el) {
-							vh = vl = create_value_list(eval(context, el->expression));
-							el = el->next;
-						}
-						for (; el; el = el->next, vl = vl->next) {
-							vl->next = create_value_list(eval(context, el->expression));
-						}
-						return func->u.native.function(fc, vh);
-					} else {
-						fprintf(stderr, "fail to eval: bad function type: %d\n", expression->type);
-						exit(1);
 					}
 				}
 			}
@@ -443,6 +457,7 @@ Context *create_context(void) {
 	Context *ctx = malloc(sizeof(Context));
 	ctx->variable_list = NULL;
 	ctx->outer = NULL;
+	ctx->self = NULL;
 	return ctx;
 }
 

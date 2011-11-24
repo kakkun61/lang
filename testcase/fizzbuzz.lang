@@ -1,0 +1,9 @@
+p3 = func(a)
+	if (a == 3)
+		puts(1).
+	else
+		puts(a)..,
+p3(1),
+p3(2),
+p3(3),
+p3(4).

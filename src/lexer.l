@@ -25,6 +25,7 @@ int yywrap(void) {
 "<=" return LE;
 "<" return LS;
 func return FUNC_TOKEN;
+self return SELF_TOKEN;
 outer return OUTER_TOKEN;
 inner return INNER_TOKEN;
 true return TRUE_TOKEN;

@@ -1,0 +1,7 @@
+factorial = func(a)
+	if (a == 1)
+		1.
+	else
+		a * self(a-1)..,
+
+factorial(10).

@@ -38,6 +38,7 @@ int yyerror(char const *str);
        SUB_TOKEN
        MUL_TOKEN
        DIV_TOKEN
+       MOD_TOKEN
        LP
        RP
        ASSIGN_TOKEN
@@ -140,7 +141,6 @@ expression:
 		$$ = create_inner_assign_expression($2, $4);
 	}
 	| function_definition_expression
-	| function_call_expression
 	| if_expression;
 logical_or_expression:
 	logical_and_expression;
@@ -205,6 +205,12 @@ multiplicative_expression:
 			d("multiplicative_expression: multiplicative_expression DIV_TOKEN primary_expression");
 		#endif
 		$$ = create_binary_expression(DIV, $1, $3);
+	}
+	| multiplicative_expression MOD_TOKEN primary_expression {
+		#ifdef DEBUG_PARSER
+			d("multiplicative_expression: multiplicative_expression MOD_TOKEN primary_expression");
+		#endif
+		$$ = create_binary_expression(MOD, $1, $3);
 	};
 unary_expression:
 	primary_expression {
@@ -249,7 +255,8 @@ primary_expression:
 			d("primary_expression: IDENTIFIER_TOKEN");
 		#endif
 		$$ = create_identifier_expression($1);
-	};
+	}
+	| function_call_expression;
 function_definition_expression:
 	FUNC_TOKEN LP RP block {
 		#ifdef DEBUG_PARSER

@@ -209,6 +209,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 	case ADD:
 	case SUB:
 	case MUL:
+	case MOD:
 	case DIV:
 	case EQUAL:
 	case NOT_EQUAL:
@@ -233,6 +234,15 @@ Value *eval(Context *const context, Expression const *const expression) {
 				return ADDEXP(*, left, right);
 			case DIV:
 				return ADDEXP(/, left, right);
+			case MOD:
+				{
+					if (left->type == INTEGER && right->type == INTEGER) {
+						return create_integer(left->u.integer % right->u.integer);
+					} else {
+						fprintf(stderr, "failed to eval: bad value type \"%%\": %d %d\n", (left)->type, (right)->type);
+						exit(EXIT_FAILURE);\
+					}
+				}
 			case EQUAL:
 				return EQEXP(==, left, right);
 			case NOT_EQUAL:
@@ -311,7 +321,6 @@ Value *eval(Context *const context, Expression const *const expression) {
 				d("FUNCTION_CALL %s", expression->u.function_call->identifier);
 			#endif
 			if (!strcmp(SELF, expression->u.function_call->identifier)) {
-				d("%s %s", SELF, expression->u.function_call->identifier);
 				return eval_foreign_function(context, expression, SELF, context->self);
 			} else {
 				var = get_variable(context, expression->u.function_call->identifier);

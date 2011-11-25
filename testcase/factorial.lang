@@ -4,4 +4,4 @@ factorial = func(a)
 	else
 		a * self(a-1)..,
 
-factorial(10).
+puts(factorial(10)).

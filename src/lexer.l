@@ -13,6 +13,7 @@ int yywrap(void) {
 "-" return SUB_TOKEN;
 "*" return MUL_TOKEN;
 "/" return DIV_TOKEN;
+"%" return MOD_TOKEN;
 "(" return LP;
 ")" return RP;
 "=" return ASSIGN_TOKEN;

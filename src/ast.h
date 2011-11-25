@@ -87,6 +87,7 @@ typedef enum {
 	SUB,
 	MUL,
 	DIV,
+	MOD,
 	ASSIGN,
 	EQUAL,
 	NOT_EQUAL,

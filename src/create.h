@@ -22,7 +22,6 @@ Expression *create_function_call_expression(char *identifier,ExpressionList *arg
 Expression *create_identifier_expression(char *identifier);
 char *create_identifier(char *identifier);
 Expression *create_assign_expression(char *identifier,Expression *operand);
-Expression *create_assign_sub(ExpressionType const type,char const *const identifier,Expression const *const operand);
 Expression *create_value_expression(Value *value);
 Expression *create_binary_expression(ExpressionType type,Expression *left,Expression *right);
 ExpressionPair *create_expression_pair(Expression *left,Expression *right);
@@ -33,3 +32,4 @@ Value *create_float_point(double value);
 Value *create_value(ValueType type);
 Expression *create_expression(ExpressionType type);
 Function *create_function(FunctionType type);
+Expression *create_minus_expression(Expression const *operand);

@@ -88,6 +88,7 @@ typedef enum {
 	MUL,
 	DIV,
 	MOD,
+	MINUS,
 	ASSIGN,
 	EQUAL,
 	NOT_EQUAL,
@@ -133,6 +134,8 @@ struct Expression_tag {
 	ExpressionType type;
 	union {
 		Value *value;
+		Expression const *expression;
+		
 		ExpressionPair const *pair;
 		Assign *assign;
 		char const *identifier;

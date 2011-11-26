@@ -218,6 +218,12 @@ unary_expression:
 			d("unary_expression: primary_expression");
 		#endif
 		$$ = $1;
+	}
+	| SUB_TOKEN unary_expression {
+		#ifdef DEBUG_PARSER
+			d("unary_expression: SUB unary_expression");
+		#endif
+		$$ = create_minus_expression($2);
 	};
 primary_expression:
 	INTEGER_LITERAL {

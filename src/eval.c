@@ -257,6 +257,18 @@ Value *eval(Context *const context, Expression const *const expression) {
 				return RELEXP(<=,left, right);
 			}
 		}
+	case MINUS:
+		{
+			Value *const operand = eval(context, expression->u.expression);
+			switch (operand->type) {
+			case INTEGER:
+				operand->u.integer *=-1;
+				return operand;
+			case FLOAT:
+				operand->u.float_point *=-1;
+				return operand;
+			}
+		}
 	case ASSIGN:
 		{
 			char const *name;

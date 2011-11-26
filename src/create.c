@@ -100,6 +100,15 @@ Expression *create_binary_expression(ExpressionType type, Expression *left, Expr
 	return expr;
 }
 
+Expression *create_minus_expression(Expression const *operand) {
+	#ifdef DEBUG_CREATE
+		d("create_minus_expression");
+	#endif
+	Expression *expr = create_expression(MINUS);
+	expr->u.expression = operand;
+	return expr;
+}
+
 Expression *create_value_expression(Value *value) {
 	#ifdef DEBUG_CREATE
 	d("create_value_expression");
@@ -109,7 +118,7 @@ Expression *create_value_expression(Value *value) {
 	return expr;
 }
 
-Expression *create_assign_sub(ExpressionType const type, char const *const identifier, Expression const *const operand) {
+static Expression *create_assign_sub(ExpressionType const type, char const *const identifier, Expression const *const operand) {
 	Expression *expr = create_expression(type);
 	expr->u.assign = malloc(sizeof(Assign));
 	expr->u.assign->identifier = identifier;

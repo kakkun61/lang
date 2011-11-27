@@ -245,3 +245,13 @@ Expression *create_inner_assign_expression(char const *const identifier, Express
 	return create_assign_sub(INNER_ASSIGN, identifier, expression);
 }
 
+Expression *create_for_expression(ExpressionList const *const initialization, ExpressionList const *const condition, ExpressionList const *const step, Expression const *const body) {
+	Expression *const expr = create_expression(FOR);
+	expr->u.lang_for = malloc(sizeof(For));
+	expr->u.lang_for->initialization = initialization;
+	expr->u.lang_for->condition = condition;
+	expr->u.lang_for->step = step;
+	expr->u.lang_for->body = body;
+	return expr;
+}
+

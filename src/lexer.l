@@ -19,6 +19,7 @@ int yywrap(void) {
 "=" return ASSIGN_TOKEN;
 "," return COMMA;
 "." return DOT;
+";" return SEMICOLON;
 "==" return EQ;
 "!=" return NE;
 ">=" return GE;
@@ -34,6 +35,7 @@ false return FALSE_TOKEN;
 if return IF_TOKEN;
 else return ELSE_TOKEN;
 elif return ELIF_TOKEN;
+for return FOR_TOKEN;
 ([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);

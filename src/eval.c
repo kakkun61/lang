@@ -37,6 +37,45 @@ static Value *eval_foreign_function(Context *const context, Expression const *co
 	return eval(fc, func->u.foreign.expression);
 }
 
+static Value *eval_expression_list(Context *const context, ExpressionList const *expression_list) {
+	ExpressionList const *el;
+	Value *val = NULL;
+	#ifdef DEBUG_EVAL
+		char str[80];
+		if (!expression_list) {
+			d("!expression_list");
+			exit(1);
+		}
+	#endif
+	FOR (el, expression_list, next) {
+		#ifdef DEBUG_EVAL
+			if (el->expression == NULL) {
+				d("el->expression == NULL");
+				exit(1);
+			}
+		#endif
+		val = eval(context, el->expression);
+		#ifdef DEBUG_EVAL
+			value2string(str, sizeof(str) - 1, val);
+			d("%s", str);
+		#endif
+	}
+	/*for (el = expression->u.expression_list; el; el = el->next) {
+		#ifdef DEBUG_EVAL
+			if (el->expression == NULL) {
+				d("el->expression == NULL");
+				exit(1);
+			}
+		#endif
+		val = eval(context, el->expression);
+		#ifdef DEBUG_EVAL
+			value2string(str, sizeof(str) - 1, val);
+			d("%s", str);
+		#endif
+	}*/
+	return val;
+}
+
 #define ADDEXP(op, left, right)\
 	({\
 		Value *tmp;\
@@ -301,30 +340,10 @@ Value *eval(Context *const context, Expression const *const expression) {
 		}
 	case BLOCK:
 		{
-			ExpressionList const *el;
-			Value *val;
 			#ifdef DEBUG_EVAL
-				char str[80];
 				d("BLOCK");
-				if (!expression->u.expression_list) {
-					d("!expression->u.expression_list");
-					exit(1);
-				}
 			#endif
-			for (el = expression->u.expression_list; el; el = el->next) {
-				#ifdef DEBUG_EVAL
-					if (el->expression == NULL) {
-						d("el->expression == NULL");
-						exit(1);
-					}
-				#endif
-				val = eval(context, el->expression);
-				#ifdef DEBUG_EVAL
-					value2string(str, sizeof(str) - 1, val);
-					d("%s", str);
-				#endif
-			}
-			return val;
+			return eval_expression_list(context, expression->u.expression_list);
 		}
 	case FUNCTION_CALL:
 		{
@@ -392,6 +411,36 @@ Value *eval(Context *const context, Expression const *const expression) {
 				d("IF");
 			#endif
 			return eval_if(context, expression->u.lang_if);	
+		}
+	case FOR:
+		{
+			#ifdef DEBUG_EVAL
+				d("FOR");
+			#endif
+			Value *cond;
+			Value *result;
+			if (expression->u.lang_for->initialization) {
+				eval_expression_list(context, expression->u.lang_for->initialization);
+			}
+			while (true) {
+				if (expression->u.lang_for->condition) {
+					cond = eval_expression_list(context, expression->u.lang_for->condition);
+					if (cond->type != BOOLEAN) {
+						fprintf(stderr, "a value of a condition of \"for\" expression must be boolean.\n");
+						exit(EXIT_FAILURE);
+					}
+					if (!cond->u.boolean) {
+						break;
+					}
+				}
+				result = eval(context, expression->u.lang_for->body);
+				// TODO break, continue の処理
+		
+				if (expression->u.lang_for->step) {
+					eval_expression_list(context, expression->u.lang_for->step);
+				}
+			}
+			return result;
 		}
 	default:
 		fprintf(stderr, "fail to eval: bad expression type: %d\n", expression->type);

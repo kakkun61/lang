@@ -1,9 +1,13 @@
-p3 = func(a)
-	if (a == 3)
-		puts(1).
+fizzbuzz = func(a)
+	if (a % 15 == 0)
+		15.
+	elif (a % 3 == 0)
+		3.
+	elif (a % 5 == 0)
+		5.
 	else
-		puts(a)..,
-p3(1),
-p3(2),
-p3(3),
-p3(4).
+		a..,
+
+for (i = 1; i <= 50; i = i + 1)
+	puts(fizzbuzz(i))..
+

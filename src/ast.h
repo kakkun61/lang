@@ -101,7 +101,8 @@ typedef enum {
 	BLOCK,
 	OUTER,
 	INNER_ASSIGN,
-	IF
+	IF,
+	FOR
 } ExpressionType;
 
 typedef struct ExpressionPair_tag {
@@ -130,18 +131,25 @@ typedef struct If_tag {
 	struct If_tag *elif;
 } If;
 
+typedef struct {
+	ExpressionList const *initialization;
+	ExpressionList const *condition;
+	ExpressionList const *step;
+	Expression const *body;
+} For;
+
 struct Expression_tag {
 	ExpressionType type;
 	union {
 		Value *value;
 		Expression const *expression;
-		
 		ExpressionPair const *pair;
 		Assign *assign;
 		char const *identifier;
 		ExpressionList const *expression_list;
 		FunctionCall *function_call;
 		If *lang_if;
+		For *lang_for;
 	} u;
 };
 

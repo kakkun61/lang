@@ -44,6 +44,7 @@ int yyerror(char const *str);
        ASSIGN_TOKEN
        COMMA
        DOT
+       SEMICOLON
        EQ
        NE
        GR
@@ -59,7 +60,9 @@ int yyerror(char const *str);
        IF_TOKEN
        ELSE_TOKEN
        ELIF_TOKEN
+       FOR_TOKEN
 %type <expression_list> expression_list
+                        expression_list_or_empty
 %type <expression> expression
                    logical_or_expression
                    logical_and_expression
@@ -73,6 +76,7 @@ int yyerror(char const *str);
                    function_definition_expression
                    function_call_expression
                    if_expression
+                   for_expression
 %type <identifier_list> identifier_list
 %type <lang_if> elif_list
                 else_kind
@@ -141,7 +145,8 @@ expression:
 		$$ = create_inner_assign_expression($2, $4);
 	}
 	| function_definition_expression
-	| if_expression;
+	| if_expression
+	| for_expression;
 logical_or_expression:
 	logical_and_expression;
 logical_and_expression:
@@ -367,6 +372,19 @@ elif:
 		#endif
 		$$ = create_if($3, $5, NULL);
 	};
+for_expression:
+	FOR_TOKEN LP expression_list_or_empty SEMICOLON
+	expression_list_or_empty SEMICOLON expression_list_or_empty RP block {
+		#ifdef DEBUG_PARSER
+			d("for_expression: FOR_TOKEN LP expression_list_or_empty SEMICOLON expression_list_or_empty SEMICOLON expression_list_or_empty RP block");
+		#endif
+		$$ = create_for_expression($3, $5, $7, $9);
+	};
+expression_list_or_empty:
+	expression_list
+	| /* empty */ {
+		$$ = NULL;
+	}
 %%
 int yyerror(char const *str) {
 	extern char *yytext;

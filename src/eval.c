@@ -9,6 +9,27 @@
 #	include "debug.h"
 #endif
 
+static Value *eval_if(Context *const context, If const *const lang_if) {
+	#ifdef DEBUG_EVAL
+		d("eval_if");
+	#endif
+	Value *val = NULL;
+	if (lang_if->condition) {
+		val = eval(context, lang_if->condition);
+		if (val->type != BOOLEAN) {
+			fprintf(stderr, "a type of a condition of \"if\" must be boolean.\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (!lang_if->condition || val->u.boolean) {
+		return eval(context, lang_if->then);
+	} else if (lang_if->elif) {
+		return eval_if(context, lang_if->elif);
+	}
+	fprintf(stderr, "mustn't come here.");
+	exit(EXIT_FAILURE);
+}
+
 static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func) {
 	#ifdef DEBUG_EVAL
 		d("eval_foreign_function %s", name);
@@ -451,27 +472,6 @@ Value *eval(Context *const context, Expression const *const expression) {
 #undef ADDEXP
 #undef EQEXP
 #undef RELEXP
-
-Value *eval_if(Context *const context, If const *const lang_if) {
-	#ifdef DEBUG_EVAL
-		d("eval_if");
-	#endif
-	Value *val = NULL;
-	if (lang_if->condition) {
-		val = eval(context, lang_if->condition);
-		if (val->type != BOOLEAN) {
-			fprintf(stderr, "a type of a condition of \"if\" must be boolean.\n");
-			exit(EXIT_FAILURE);
-		}
-	}
-	if (!lang_if->condition || val->u.boolean) {
-		return eval(context, lang_if->then);
-	} else if (lang_if->elif) {
-		return eval_if(context, lang_if->elif);
-	}
-	fprintf(stderr, "mustn't come here.");
-	exit(EXIT_FAILURE);
-}
 
 int value2string(char *string, size_t size, const Value *value) {
 	switch (value->type) {

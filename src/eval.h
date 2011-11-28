@@ -10,7 +10,6 @@
 #define SELF "self"
 
 void add_variable(Context *const context,Variable *const variable,VariableType const type);
-Value *eval_if(Context *const context,If const *const lang_if);
 void add_inner_variable(Context *const context,Variable *const variable);
 Variable *add_outer_variable(Context *const context,char const *const name);
 ValueList *create_value_list(Value *value);

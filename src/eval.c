@@ -81,19 +81,6 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 			d("%s", str);
 		#endif
 	}
-	/*for (el = expression->u.expression_list; el; el = el->next) {
-		#ifdef DEBUG_EVAL
-			if (el->expression == NULL) {
-				d("el->expression == NULL");
-				exit(1);
-			}
-		#endif
-		val = eval(context, el->expression);
-		#ifdef DEBUG_EVAL
-			value2string(str, sizeof(str) - 1, val);
-			d("%s", str);
-		#endif
-	}*/
 	return val;
 }
 

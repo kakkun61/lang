@@ -9,6 +9,12 @@
 #	include "debug.h"
 #endif
 
+static Value *eval_if(Context *const context, If const *const lang_if);
+static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func);
+static Value *eval_expression_list(Context *const context, ExpressionList const *expression_list);
+static void add_typed_variable_list(Context *const context, TypedVariableList *const variable_list);
+static void add_variable(Context *const context, Variable *const variable, VariableType const type);
+
 static Value *eval_if(Context *const context, If const *const lang_if) {
 	#ifdef DEBUG_EVAL
 		d("eval_if");
@@ -21,7 +27,7 @@ static Value *eval_if(Context *const context, If const *const lang_if) {
 			exit(EXIT_FAILURE);
 		}
 	}
-	if (!lang_if->condition || val->u.boolean) {
+	if (!lang_if->condition || val->u.boolean) { // else 式または条件が真
 		return eval(context, lang_if->then);
 	} else if (lang_if->elif) {
 		return eval_if(context, lang_if->elif);
@@ -534,18 +540,23 @@ void add_inner_variable(Context *const context, Variable *const variable) {
 	}
 }
 
+static void add_typed_variable_list(Context *const context, TypedVariableList *const variable_list) {
+	TypedVariableList *tvl;
+	if (context->variable_list) {
+		GET_LAST (tvl, context->variable_list, next);
+		tvl->next = variable_list;
+	} else {
+		context->variable_list = variable_list;
+	}
+}
+
 static void add_variable(Context *const context, Variable *const variable, VariableType const type) {
-	TypedVariableList *crt, *tvl;
+	TypedVariableList *crt;
 	crt = malloc(sizeof(TypedVariableList));
 	crt->variable = variable;
 	crt->type = type;
 	crt->next = NULL;
-	if (context->variable_list) {
-		for (tvl = context->variable_list; tvl->next; tvl = tvl->next);
-		tvl->next = crt;
-	} else {
-		context->variable_list = crt;
-	}
+	add_typed_variable_list(context, crt);
 }
 
 /**

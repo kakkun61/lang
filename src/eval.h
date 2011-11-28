@@ -9,7 +9,6 @@
 
 #define SELF "self"
 
-void add_variable(Context *const context,Variable *const variable,VariableType const type);
 void add_inner_variable(Context *const context,Variable *const variable);
 Variable *add_outer_variable(Context *const context,char const *const name);
 ValueList *create_value_list(Value *value);

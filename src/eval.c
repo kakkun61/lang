@@ -534,6 +534,20 @@ void add_inner_variable(Context *const context, Variable *const variable) {
 	}
 }
 
+static void add_variable(Context *const context, Variable *const variable, VariableType const type) {
+	TypedVariableList *crt, *tvl;
+	crt = malloc(sizeof(TypedVariableList));
+	crt->variable = variable;
+	crt->type = type;
+	crt->next = NULL;
+	if (context->variable_list) {
+		for (tvl = context->variable_list; tvl->next; tvl = tvl->next);
+		tvl->next = crt;
+	} else {
+		context->variable_list = crt;
+	}
+}
+
 /**
  * @return 成功時、Variable へのポインター。失敗時。NULL。
  */
@@ -550,20 +564,6 @@ Variable *add_outer_variable(Context *const context, char const *const name) {
 
 void add_local_variable(Context *const context, Variable *const variable) {
 	add_variable(context, variable, LOCAL_VARIABLE);
-}
-
-void add_variable(Context *const context, Variable *const variable, VariableType const type) {
-	TypedVariableList *crt, *tvl;
-	crt = malloc(sizeof(TypedVariableList));
-	crt->variable = variable;
-	crt->type = type;
-	crt->next = NULL;
-	if (context->variable_list) {
-		for (tvl = context->variable_list; tvl->next; tvl = tvl->next);
-		tvl->next = crt;
-	} else {
-		context->variable_list = crt;
-	}
 }
 
 Variable *get_variable(Context const *const context, char const *const name) {

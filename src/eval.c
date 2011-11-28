@@ -535,7 +535,7 @@ void add_inner_variable(Context *const context, Variable *const variable) {
 }
 
 /**
- * @return 成功時、Variable のアドレス。失敗時。NULL。
+ * @return 成功時、Variable へのポインター。失敗時。NULL。
  */
 Variable *add_outer_variable(Context *const context, char const *const name) {
 	if (context->outer) {

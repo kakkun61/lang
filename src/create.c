@@ -4,15 +4,10 @@
 #include "ast.h"
 #include "create.h"
 #include "list-util.h"
-
-#ifdef DEBUG
-#	include "debug.h"
-#endif
+#include "debug.h"
 
 Expression *create_expression(ExpressionType type) {
-	#ifdef DEBUG_CREATE
 	d("create_expression");
-	#endif
 	Expression *expr = malloc(sizeof(Expression));
 	if (!expr) {
 		fprintf(stderr, "Memory allocation error\n");
@@ -23,36 +18,28 @@ Expression *create_expression(ExpressionType type) {
 }
 
 Value *create_value(ValueType type) {
-	#ifdef DEBUG_CREATE
 	d("create_value");
-	#endif
 	Value *val = malloc(sizeof(Value));
 	val->type = type;
 	return val;
 }
 
 Value *create_float_point(double value) {
-	#ifdef DEBUG_CREATE
 	d("create_float_point(%lf)", value);
-	#endif
 	Value *val = create_value(FLOAT);
 	val->u.float_point = value;
 	return val;
 }
 
 Value *create_integer(int value) {
-	#ifdef DEBUG_CREATE
 	d("create_integer(%d)", value);
-	#endif
 	Value *val = create_value(INTEGER);
 	val->u.integer = value;
 	return val;
 }
 
 Value *create_boolean(bool value) {
-	#ifdef DEBUG_CREATE
 	d("create_boolean(%d)", value);
-	#endif
 	Value *val = create_value(BOOLEAN);
 	val->u.boolean = value;
 	return val;
@@ -66,9 +53,7 @@ Function *create_function(FunctionType type) {
 
 Value *create_foreign_function(IdentifierList *parameter_list, Expression *expression) {
 	Value *val = create_value(FUNCTION);
-	#ifdef DEBUG_CREATE
 		d("create_foreign_function");
-	#endif
 	#ifdef TEST
 		if (expression->type != BLOCK) {
 			d("interpreter bug: expression->type != BLOCK");
@@ -82,9 +67,7 @@ Value *create_foreign_function(IdentifierList *parameter_list, Expression *expre
 }
 
 ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
-	#ifdef DEBUG_CREATE
 	d("create_expression_pair");
-	#endif
 	ExpressionPair *pair = malloc(sizeof(ExpressionPair));
 	pair->left = left;
 	pair->right = right;
@@ -92,27 +75,21 @@ ExpressionPair *create_expression_pair(Expression *left, Expression *right) {
 }
 
 Expression *create_binary_expression(ExpressionType type, Expression *left, Expression *right) {
-	#ifdef DEBUG_CREATE
 	d("create_binary_expression");
-	#endif
 	Expression *expr = create_expression(type);
 	expr->u.pair = create_expression_pair(left, right);
 	return expr;
 }
 
 Expression *create_minus_expression(Expression const *operand) {
-	#ifdef DEBUG_CREATE
-		d("create_minus_expression");
-	#endif
+	d("create_minus_expression");
 	Expression *expr = create_expression(MINUS);
 	expr->u.expression = operand;
 	return expr;
 }
 
 Expression *create_value_expression(Value *value) {
-	#ifdef DEBUG_CREATE
 	d("create_value_expression");
-	#endif
 	Expression *expr = create_expression(VALUE);
 	expr->u.value = value;
 	return expr;
@@ -127,9 +104,7 @@ static Expression *create_assign_sub(ExpressionType const type, char const *cons
 }
 
 Expression *create_assign_expression(char *identifier, Expression *operand) {
-	#ifdef DEBUG_CREATE
 	d("create_assign_expression");
-	#endif
 	return create_assign_sub(ASSIGN, identifier, operand);
 }
 
@@ -146,9 +121,7 @@ Expression *create_identifier_expression(char *identifier) {
 }
 
 Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list) {
-	#ifdef DEBUG_CREATE
-		d("create_function_call_expression");
-	#endif
+	d("create_function_call_expression");
 	Expression *expr = create_expression(FUNCTION_CALL);
 	expr->u.function_call = malloc(sizeof(FunctionCall));
 	expr->u.function_call->identifier = identifier;
@@ -178,9 +151,7 @@ void add_if(If *head, If *elif) {
 
 ExpressionList *create_expression_list(Expression *expression) {
 	ExpressionList *el;
-	#ifdef DEBUG_CREATE
-		d("create_expression_list");
-	#endif
+	d("create_expression_list");
 	el = malloc(sizeof(ExpressionList));
 	el->expression = expression;
 	el->next = NULL;
@@ -189,7 +160,7 @@ ExpressionList *create_expression_list(Expression *expression) {
 
 void add_expression(ExpressionList *expression_list, Expression *expression) {
 	ExpressionList *el;
-	#ifdef DEBUG
+	#ifdef TEST
 		if (expression == NULL) {
 			d("expression == NULL");
 			exit(1);
@@ -201,9 +172,7 @@ void add_expression(ExpressionList *expression_list, Expression *expression) {
 
 IdentifierList *create_identifier_list(char *identifier) {
 	IdentifierList *il;
-	#ifdef DEBUG_CREATE
-		d("create_identifier_list");
-	#endif
+	d("create_identifier_list");
 	il = malloc(sizeof(IdentifierList));
 	il->identifier = identifier;
 	il->next = NULL;
@@ -212,17 +181,13 @@ IdentifierList *create_identifier_list(char *identifier) {
 
 void add_identifier(IdentifierList *identifier_list, char *identifier) {
 	IdentifierList *il;
-	#ifdef DEBUG_CREATE
-		d("add_identifier");
-	#endif
+	d("add_identifier");
 	for (il = identifier_list; il->next; il = il->next);
 	il->next = create_identifier_list(identifier);
 }
 
 Expression *create_block_expression(ExpressionList *expression_list) {
-	#ifdef DEBUG_CREATE
 	d("create_block_expression");
-	#endif
 	Expression *expr;
 	expr = create_expression(BLOCK);
 	expr->u.expression_list = expression_list;
@@ -230,18 +195,14 @@ Expression *create_block_expression(ExpressionList *expression_list) {
 }
 
 Expression *create_outer_expression(char const *const identifier) {
-	#ifdef DEBUG_CREATE
-		d("create_outer_expression");
-	#endif
+	d("create_outer_expression");
 	Expression *expr = create_expression(OUTER);
 	expr->u.identifier = identifier;
 	return expr;
 }
 
 Expression *create_inner_assign_expression(char const *const identifier, Expression const *const expression) {
-	#ifdef DEBUG_CREATE
-		d("create_inner_expression");
-	#endif
+	d("create_inner_expression");
 	return create_assign_sub(INNER_ASSIGN, identifier, expression);
 }
 

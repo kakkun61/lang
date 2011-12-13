@@ -4,10 +4,7 @@
 #include "ast.h"
 #include "list-util.h"
 #include "create.h"
-
-#ifdef DEBUG
-#	include "debug.h"
-#endif
+#include "debug.h"
 
 static Value *eval_if(Context *const context, If const *const lang_if);
 static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func);
@@ -16,9 +13,7 @@ static void add_typed_variable_list(Context *const context, TypedVariableList *c
 static void add_variable(Context *const context, Variable *const variable, VariableType const type);
 
 static Value *eval_if(Context *const context, If const *const lang_if) {
-	#ifdef DEBUG_EVAL
-		d("eval_if");
-	#endif
+	d("eval_if");
 	Value *val = NULL;
 	if (lang_if->condition) {
 		val = eval(context, lang_if->condition);
@@ -37,9 +32,7 @@ static Value *eval_if(Context *const context, If const *const lang_if) {
 }
 
 static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func) {
-	#ifdef DEBUG_EVAL
-		d("eval_foreign_function %s", name);
-	#endif
+	d("eval_foreign_function %s", name);
 	Context *fc;
 	fc = create_context();
 	fc->outer = func->u.foreign.context;
@@ -67,22 +60,24 @@ static Value *eval_foreign_function(Context *const context, Expression const *co
 static Value *eval_expression_list(Context *const context, ExpressionList const *expression_list) {
 	ExpressionList const *el;
 	Value *val = NULL;
-	#ifdef DEBUG_EVAL
+	#ifdef DEBUG
 		char str[80];
+	#endif
+	#ifdef TEST
 		if (!expression_list) {
 			d("!expression_list");
 			exit(1);
 		}
 	#endif
 	FOR (el, expression_list, next) {
-		#ifdef DEBUG_EVAL
+		#ifdef TEST
 			if (el->expression == NULL) {
 				d("el->expression == NULL");
 				exit(1);
 			}
 		#endif
 		val = eval(context, el->expression);
-		#ifdef DEBUG_EVAL
+		#ifdef DEBUG
 			value2string(str, sizeof(str) - 1, val);
 			d("%s", str);
 		#endif
@@ -238,21 +233,17 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 	})
 
 Value *eval(Context *const context, Expression const *const expression) {
-	#ifdef DEBUG_EVAL
-		d("eval");
-	#endif
-	#ifdef DEBUG
-	if (!expression) {
-		d("expression == NULL");
-		exit(1);
-	}
+	d("eval");
+	#ifdef TEST
+		if (!expression) {
+			d("expression == NULL");
+			exit(1);
+		}
 	#endif
 	switch (expression->type) {
 	case VALUE:
 		{
-			#ifdef DEBUG_EVAL
-				d("VALUE");
-			#endif
+			d("VALUE");
 			if (expression->u.value->type == FUNCTION
 					&& expression->u.value->u.function->type == FOREIGN_FUNCTION) {
 				expression->u.value->u.function->u.foreign.context = context;
@@ -273,9 +264,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 		{
 			Value const *left;
 			Value const *right;
-			#ifdef DEBUG_EVAL
-				d("ADD | SUB | MUL | DIV");
-			#endif
+			d("ADD | SUB | MUL | DIV | EQUAL | NOT_EQUAL | GRATER | GRATER_EQUAL | LESS | LESS_EQUAL");
 			left = eval(context, expression->u.pair->left);
 			right = eval(context, expression->u.pair->right);
 			switch (expression->type) {
@@ -326,9 +315,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 		{
 			char const *name;
 			Variable *var;
-			#ifdef DEBUG_EVAL
-				d("ASSIGN");
-			#endif
+			d("ASSIGN");
 			name = expression->u.assign->identifier;
 			var = get_variable(context, name);
 			if (!var) {
@@ -341,9 +328,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 	case IDENTIFIER:
 		{
 			Variable *var;
-			#ifdef DEBUG_EVAL
-				d("IDENTIFIER");
-			#endif
+			d("IDENTIFIER");
 			var = get_variable(context, expression->u.identifier);
 			if (var) {
 				return var->value;
@@ -354,17 +339,13 @@ Value *eval(Context *const context, Expression const *const expression) {
 		}
 	case BLOCK:
 		{
-			#ifdef DEBUG_EVAL
-				d("BLOCK");
-			#endif
+			d("BLOCK");
 			return eval_expression_list(context, expression->u.expression_list);
 		}
 	case FUNCTION_CALL:
 		{
 			Variable *var;
-			#ifdef DEBUG_EVAL
-				d("FUNCTION_CALL %s", expression->u.function_call->identifier);
-			#endif
+			d("FUNCTION_CALL %s", expression->u.function_call->identifier);
 			if (!strcmp(SELF, expression->u.function_call->identifier)) {
 				return eval_foreign_function(context, expression, SELF, context->self);
 			} else {
@@ -401,9 +382,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 	case OUTER:
 		{
 			Variable *var;
-			#ifdef DEBUG_EVAL
-				d("OUTER");
-			#endif
+			d("OUTER");
 			var = add_outer_variable(context, expression->u.identifier);
 			if (var) {
 				return var->value;
@@ -421,16 +400,12 @@ Value *eval(Context *const context, Expression const *const expression) {
 		}
 	case IF:
 		{
-			#ifdef DEBUG_EVAL
-				d("IF");
-			#endif
+			d("IF");
 			return eval_if(context, expression->u.lang_if);	
 		}
 	case FOR:
 		{
-			#ifdef DEBUG_EVAL
-				d("FOR");
-			#endif
+			d("FOR");
 			Value *cond;
 			Value *result;
 			if (expression->u.lang_for->initialization) {
@@ -525,9 +500,7 @@ Context *create_context(void) {
 }
 
 void add_inner_variable(Context *const context, Variable *const variable) {
-	#ifdef DEBUG_EVAL
-		d("add_inner_variable");
-	#endif
+	d("add_inner_variable");
 	VariableList *crt, *vl;
 	crt = malloc(sizeof(VariableList));
 	crt->variable = variable;
@@ -578,9 +551,7 @@ void add_local_variable(Context *const context, Variable *const variable) {
 }
 
 Variable *get_variable(Context const *const context, char const *const name) {
-	#ifdef DEBUG_EVAL
-		d("get_variable");
-	#endif
+	d("get_variable");
 	Context const *outer;
 	FOR (outer, context, outer) {
 		VariableList *vl;

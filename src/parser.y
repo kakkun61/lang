@@ -8,15 +8,7 @@
 #include "debug.h"
 #include "eval.h"
 #include "lang.h"
-
-#ifdef DEBUG
-#	define DEBUG_PARSER
-#	include "debug.h"
-#endif
-
-#ifdef DEBUG_PARSER
-#	include "debug.h"
-#endif
+#include "debug.h"
 
 #define YYDEBUG 1
 
@@ -85,25 +77,19 @@ int yyerror(char const *str);
 %%
 root_expression:
 	block {
-		#ifdef DEBUG_PARSER
-			d("root_expression: block");
-		#endif
+		d("root_expression: block");
 		set_expression(get_compile_script(), $1);
 		// get_compile_script()->expression = $1;
 	};
 block:
 	expression_list DOT {
-		#ifdef DEBUG_PARSER
-			d("block: expression_list DOT");
-		#endif
+		d("block: expression_list DOT");
 		$$ = create_block_expression($1);
 	};
 expression_list:
 	expression {
-		#ifdef DEBUG_PARSER
-			d("expression_list: expression");
-		#endif
-		#ifdef DEBUG
+		d("expression_list: expression");
+		#ifdef TEST
 			if ($1 == NULL) {
 				d("$1 == NULL");
 				exit(1);
@@ -112,10 +98,8 @@ expression_list:
 		$$ = create_expression_list($1);
 	}
 	| expression_list COMMA expression {
-		#ifdef DEBUG_PARSER
-			d("expression_list: expression_list COMMA expression");
-		#endif
-		#ifdef DEBUG
+		d("expression_list: expression_list COMMA expression");
+		#ifdef TEST
 			if ($3 == NULL) {
 				d("$3 == NULL");
 				exit(1);
@@ -127,21 +111,15 @@ expression_list:
 expression:
 	logical_or_expression
 	| IDENTIFIER_TOKEN ASSIGN_TOKEN expression {
-		#ifdef DEBUG_PARSER
-			d("expression: IDENTIFIER_TOKEN ASSIGN_TOKEN expression");
-		#endif
+		d("expression: IDENTIFIER_TOKEN ASSIGN_TOKEN expression");
 		$$ = create_assign_expression($1, $3);
 	}
 	| OUTER_TOKEN IDENTIFIER_TOKEN {
-		#ifdef DEBUG_PARSER
-			d("expression: OUTER_TOKEN IDENTIFIER_TOKEN");
-		#endif
+		d("expression: OUTER_TOKEN IDENTIFIER_TOKEN");
 		$$ = create_outer_expression($2);
 	}
 	| INNER_TOKEN IDENTIFIER_TOKEN ASSIGN_TOKEN expression {
-		#ifdef DEBUG_PARSER
-			d("expression: INNER_TOKEN IDENTIFIER_TOKEN ASSIGN_TOKEN expression");
-		#endif
+		d("expression: INNER_TOKEN IDENTIFIER_TOKEN ASSIGN_TOKEN expression");
 		$$ = create_inner_assign_expression($2, $4);
 	}
 	| function_definition_expression
@@ -175,110 +153,76 @@ relational_expression:
 	};
 additive_expression:
 	multiplicative_expression {
-		#ifdef DEBUG_PARSER
-			d("additive_expression: multiplicative_expression");
-		#endif
+		d("additive_expression: multiplicative_expression");
 		$$ = $1;
 	}
 	| additive_expression ADD_TOKEN multiplicative_expression {
-		#ifdef DEBUG_PARSER
-			d("additive_expression: additive_expression ADD_TOKEN multiplicative_expression");
-		#endif
+		d("additive_expression: additive_expression ADD_TOKEN multiplicative_expression");
 		$$ = create_binary_expression(ADD, $1, $3);
 	}
 	| additive_expression SUB_TOKEN multiplicative_expression {
-		#ifdef DEBUG_PARSER
-			d("additive_expression: additive_expression SUB_TOKEN multiplicative_expression");
-		#endif
+		d("additive_expression: additive_expression SUB_TOKEN multiplicative_expression");
 		$$ = create_binary_expression(SUB, $1, $3);
 	};
 multiplicative_expression:
 	unary_expression {
-		#ifdef DEBUG_PARSER
-			d("multiplicative_expression: unary_expression");
-		#endif
+		d("multiplicative_expression: unary_expression");
 		$$ = $1;
 	}
 	| multiplicative_expression MUL_TOKEN primary_expression  {
-		#ifdef DEBUG_PARSER
-			d("multiplicative_expression: multiplicative_expression MUL_TOKEN primary_expression");
-		#endif
+		d("multiplicative_expression: multiplicative_expression MUL_TOKEN primary_expression");
 		$$ = create_binary_expression(MUL, $1, $3);
 	}
 	| multiplicative_expression DIV_TOKEN primary_expression {
-		#ifdef DEBUG_PARSER
-			d("multiplicative_expression: multiplicative_expression DIV_TOKEN primary_expression");
-		#endif
+		d("multiplicative_expression: multiplicative_expression DIV_TOKEN primary_expression");
 		$$ = create_binary_expression(DIV, $1, $3);
 	}
 	| multiplicative_expression MOD_TOKEN primary_expression {
-		#ifdef DEBUG_PARSER
-			d("multiplicative_expression: multiplicative_expression MOD_TOKEN primary_expression");
-		#endif
+		d("multiplicative_expression: multiplicative_expression MOD_TOKEN primary_expression");
 		$$ = create_binary_expression(MOD, $1, $3);
 	};
 unary_expression:
 	primary_expression {
-		#ifdef DEBUG_PARSER
-			d("unary_expression: primary_expression");
-		#endif
+		d("unary_expression: primary_expression");
 		$$ = $1;
 	}
 	| SUB_TOKEN unary_expression {
-		#ifdef DEBUG_PARSER
-			d("unary_expression: SUB unary_expression");
-		#endif
+		d("unary_expression: SUB unary_expression");
 		$$ = create_minus_expression($2);
 	};
 primary_expression:
 	INTEGER_LITERAL {
-		#ifdef DEBUG_PARSER
-			d("primary_expression: INTEGER_LITERAL");
-		#endif
+		d("primary_expression: INTEGER_LITERAL");
 		$$ = create_value_expression(create_integer($1));
 	}
 	| FLOAT_POINT_LITERAL {
-		#ifdef DEBUG_PARSER
-			d("primary_expression: FLOAT_POINT_LITERAL");
-		#endif
+		d("primary_expression: FLOAT_POINT_LITERAL");
 		$$ = create_value_expression(create_float_point($1));
 	}
 	| TRUE_TOKEN {
-		#ifdef DEBUG_PARSER
-			d("primary_expression: TRUE_TOKEN");
-		#endif
+		d("primary_expression: TRUE_TOKEN");
 		$$ = create_value_expression(create_boolean(true));
 	}
 	| FALSE_TOKEN {
-		#ifdef DEBUG_PARSER
-			d("primary_expression: FALSE_TOKEN");
-		#endif
+		d("primary_expression: FALSE_TOKEN");
 		$$ = create_value_expression(create_boolean(false));
 	}
 	| LP expression RP {
-		#ifdef DEBUG_PARSER
-			d("primary_expression: LP expression RP");
-		#endif
+		d("primary_expression: LP expression RP");
 		$$ = $2;
 	}
 	| IDENTIFIER_TOKEN {
-		#ifdef DEBUG_PARSER
-			d("primary_expression: IDENTIFIER_TOKEN");
-		#endif
+		d("primary_expression: IDENTIFIER_TOKEN");
 		$$ = create_identifier_expression($1);
 	}
 	| function_call_expression;
 function_definition_expression:
 	FUNC_TOKEN LP RP block {
-		#ifdef DEBUG_PARSER
-			d("function_definition_expression: FUNC_TOKEN LP RP block");
-		#endif
+		d("function_definition_expression: FUNC_TOKEN LP RP block");
 		$$ = create_value_expression(create_foreign_function(NULL, $4));
 	}
 	| FUNC_TOKEN LP identifier_list RP block {
-		#ifdef DEBUG_PARSER
-			d("function_definition_expression: FUNC_TOKEN LP identifier_list RP block");
-		#endif
+		d("function_definition_expression: FUNC_TOKEN LP identifier_list RP block");
 		$$ = create_value_expression(create_foreign_function($3, $5));
 	};
 identifier_list:
@@ -291,93 +235,65 @@ identifier_list:
 	};
 function_call_expression:
 	IDENTIFIER_TOKEN LP RP {
-		#ifdef DEBUG_PARSER
-			d("function_call_expression: IDENTIFIER_TOKEN LP RP");
-		#endif
+		d("function_call_expression: IDENTIFIER_TOKEN LP RP");
 		$$ = create_function_call_expression($1, NULL);
 	}
 	| IDENTIFIER_TOKEN LP expression_list RP {
-		#ifdef DEBUG_PARSER
-			d("function_call_expression: IDENTIFIER_TOKEN LP expression_list RP");
-		#endif
+		d("function_call_expression: IDENTIFIER_TOKEN LP expression_list RP");
 		$$ = create_function_call_expression($1, $3);
 	}
 	| SELF_TOKEN LP RP {
-		#ifdef DEBUG_PARSER
-			d("function_call_expression: SELF_TOKEN LP RP");
-		#endif
+		d("function_call_expression: SELF_TOKEN LP RP");
 		$$ = create_function_call_expression(create_identifier(SELF), NULL);
 	}
 	| SELF_TOKEN LP expression_list RP {
-		#ifdef DEBUG_PARSER
-			d("function_call_expression: SELF_TOKEN LP expression_list RP");
-		#endif
+		d("function_call_expression: SELF_TOKEN LP expression_list RP");
 		$$ = create_function_call_expression(create_identifier(SELF), $3);
 	};
 if_expression:
 	IF_TOKEN LP expression RP block {
-		#ifdef DEBUG_PARSER
-			d("if_expression: IF_TOKEN LP expression RP block");
-		#endif
+		d("if_expression: IF_TOKEN LP expression RP block");
 		$$ = create_if_expression($3, $5, NULL);
 	}
 	| IF_TOKEN LP expression RP block else_kind {
-		#ifdef DEBUG_PARSER
-			d("if_expression: IF_TOKEN LP expression RP block else_kind");
-		#endif
+		d("if_expression: IF_TOKEN LP expression RP block else_kind");
 		$$ = create_if_expression($3, $5, $6);
 	};
 else:
 	ELSE_TOKEN block {
-		#ifdef DEBUG_PARSER
-			d("else: ELSE_TOKEN block");
-		#endif
+		d("else: ELSE_TOKEN block");
 		$$ = create_if(NULL, $2, NULL);
 	};
 else_kind:
 	else {
-		#ifdef DEBUG_PARSER
-			d("else_kind: else");
-		#endif
+		d("else_kind: else");
 	}
 	| elif_list {
-		#ifdef DEBUG_PARSER
-			d("else_kind: elif_list");
-		#endif
+		d("else_kind: elif_list");
 	}
 	| elif_list else {
-		#ifdef DEBUG_PARSER
-			d("else_kind: elif_list else");
-		#endif
+		d("else_kind: elif_list else");
 		add_if($1, $2);
 		$$ = $1;
 	};
 elif_list:
 	elif {
-		#ifdef DEBUG_PARSER
-			d("elif_list: elif");
-		#endif
+		d("elif_list: elif");
 	}
 	| elif_list elif {
-		#ifdef DEBUG_PARSER
-			d("elif_list: elif_list elif");
-		#endif
+		d("elif_list: elif_list elif");
 		add_if($1, $2);
 		$$ = $1;
 	};
 elif:
 	ELIF_TOKEN LP expression RP block {
-		#ifdef DEBUG_PARSER
-			d("elif: ELIF_TOKEN LP expression RP block");
-		#endif
+		d("elif: ELIF_TOKEN LP expression RP block");
 		$$ = create_if($3, $5, NULL);
 	};
 for_expression:
 	FOR_TOKEN LP expression_list_or_empty SEMICOLON
 	expression_list_or_empty SEMICOLON expression_list_or_empty RP block {
-		#ifdef DEBUG_PARSER
-			d("for_expression: FOR_TOKEN LP expression_list_or_empty SEMICOLON expression_list_or_empty SEMICOLON expression_list_or_empty RP block");
-		#endif
+		d("for_expression: FOR_TOKEN LP expression_list_or_empty SEMICOLON expression_list_or_empty SEMICOLON expression_list_or_empty RP block");
 		$$ = create_for_expression($3, $5, $7, $9);
 	};
 expression_list_or_empty:

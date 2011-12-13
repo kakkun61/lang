@@ -3,10 +3,6 @@
 #include <stdlib.h>
 #include "ast.h"
 
-#ifdef DEBUG
-#	define DEBUG_EVAL
-#endif
-
 #define SELF "self"
 
 void add_inner_variable(Context *const context,Variable *const variable);

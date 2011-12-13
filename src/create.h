@@ -2,10 +2,6 @@
 
 #include "ast.h"
 
-#ifdef DEBUG
-#	define DEBUG_CREATE
-#endif
-
 Expression *create_inner_assign_expression(char const *const identifier,Expression const *const expression);
 Expression *create_outer_expression(char const *const identifier);
 Expression *create_block_expression(ExpressionList *expression_list);

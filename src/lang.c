@@ -2,10 +2,7 @@
 #include "lang.h"
 #include "eval.h"
 #include "builtin.h"
-
-#ifdef DEBUG
-#	include "debug.h"
-#endif
+#include "debug.h"
 
 struct Script_tag {
 	Expression *expression;
@@ -37,9 +34,7 @@ static void prepare_builtin_function(Context *const context) {
 }
 
 void interpret(Script *script) {
-	#ifdef DEBUG_LANG
 	d("interpret");
-	#endif
 	prepare_builtin_function(script->global_context);
 	eval(script->global_context, script->expression);
 }

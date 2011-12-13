@@ -1,10 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lang.h"
-
-#ifdef DEBUG
-# include "debug.h"
-#endif
+#include "debug.h"
 
 int main(int argc, char **argv) {
 	FILE *input;

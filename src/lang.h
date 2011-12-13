@@ -2,10 +2,6 @@
 
 #include <stdio.h>
 
-#ifdef DEBUG
-#	define DEBUG_LANG
-#endif
-
 typedef struct Script_tag Script;
 
 int compile(FILE *input);

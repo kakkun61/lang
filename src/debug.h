@@ -1,5 +1,4 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#pragma once
 
 #include <stdio.h>
 
@@ -12,7 +11,5 @@
 #	define TEST
 #else
 #	define d(...)
-#endif
-
 #endif
 

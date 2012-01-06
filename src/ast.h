@@ -55,7 +55,14 @@ typedef struct TypedVariableList_tag {
 	struct TypedVariableList_tag *next;
 } TypedVariableList;
 
+typedef enum {
+	FUNCTION_CONTEXT,
+	IF_CONTEXT,
+	FOR_CONTEXT,
+} ContextType;
+
 typedef struct Context_tag {
+	ContextType type;
 	TypedVariableList *variable_list;
 	struct Context_tag const *outer;
 	VariableList *inner_variable_list;

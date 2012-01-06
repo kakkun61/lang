@@ -23,7 +23,7 @@ Script *get_compile_script(void) {
 Script *create_script(void) {
 	Script *script = malloc(sizeof(Script));
 	script->expression = NULL;
-	script->global_context = create_context();
+	script->global_context = create_context(FUNCTION_CONTEXT);
 	return script;
 }
 

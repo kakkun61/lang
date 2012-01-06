@@ -34,7 +34,7 @@ static Value *eval_if(Context *const context, If const *const lang_if) {
 static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func) {
 	d("eval_foreign_function %s", name);
 	Context *fc;
-	fc = create_context();
+	fc = create_context(FUNCTION_CONTEXT);
 	fc->outer = func->u.foreign.context;
 	fc->self = func;
 	IdentifierList const *pl;
@@ -79,7 +79,7 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 		val = eval(context, el->expression);
 		#ifdef DEBUG
 			value2string(str, sizeof(str) - 1, val);
-			d("%s", str);
+			d("=> %s", str);
 		#endif
 	}
 	return val;
@@ -357,7 +357,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 						if (func->type == FOREIGN_FUNCTION) {
 							return eval_foreign_function(context, expression, var->name, func);
 						} else if (func->type == NATIVE_FUNCTION) {
-							Context *const fc = create_context();
+							Context *const fc = create_context(FUNCTION_CONTEXT);
 							ValueList *vl, *vh;
 							ExpressionList const *el;
 							el = expression->u.function_call->argument_list;
@@ -491,8 +491,9 @@ Variable *create_variable(char const *const name) {
 	return var;
 }
 
-Context *create_context(void) {
+Context *create_context(ContextType type) {
 	Context *ctx = malloc(sizeof(Context));
+	ctx->type = type;
 	ctx->variable_list = NULL;
 	ctx->outer = NULL;
 	ctx->self = NULL;
@@ -500,7 +501,13 @@ Context *create_context(void) {
 }
 
 void add_inner_variable(Context *const context, Variable *const variable) {
-	d("add_inner_variable");
+	d("add_inner_variable %s", variable->name);
+	#ifdef TEST
+	if (!variable) {
+		fprintf(stderr, "variable is NULL\n");
+		exit(EXIT_FAILURE);
+	}
+	#endif
 	VariableList *crt, *vl;
 	crt = malloc(sizeof(VariableList));
 	crt->variable = variable;
@@ -536,6 +543,7 @@ static void add_variable(Context *const context, Variable *const variable, Varia
  * @return 成功時、Variable へのポインター。失敗時。NULL。
  */
 Variable *add_outer_variable(Context *const context, char const *const name) {
+	d("add_outer_variable %s", name);
 	if (context->outer) {
 		Variable *var = get_variable(context->outer, name);
 		if (var) {
@@ -547,11 +555,12 @@ Variable *add_outer_variable(Context *const context, char const *const name) {
 }
 
 void add_local_variable(Context *const context, Variable *const variable) {
+	d("add_local_variable %s", variable->name);
 	add_variable(context, variable, LOCAL_VARIABLE);
 }
 
 Variable *get_variable(Context const *const context, char const *const name) {
-	d("get_variable");
+	d("get_variable %s", name);
 	Context const *outer;
 	FOR (outer, context, outer) {
 		VariableList *vl;

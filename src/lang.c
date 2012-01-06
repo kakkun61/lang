@@ -2,6 +2,7 @@
 #include "lang.h"
 #include "eval.h"
 #include "builtin.h"
+#include "create.h"
 #include "debug.h"
 
 struct Script_tag {
@@ -28,7 +29,7 @@ Script *create_script(void) {
 
 static void prepare_builtin_function(Context *const context) {
 	Variable *var;
-	var = create_variable("puts");
+	var = create_variable(create_identifier("puts"));
 	var->value = create_native_function(lang_puts);
 	add_inner_variable(context, var);
 }

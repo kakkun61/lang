@@ -2,3 +2,9 @@
 
 インタープリター作るぉ！
 
+* Compile
+cd src
+yacc -d parser.y
+lex lexer.l
+cd ..
+./make

@@ -11,6 +11,7 @@ static Value *eval_foreign_function(Context *const context, Expression const *co
 static Value *eval_expression_list(Context *const context, ExpressionList const *expression_list);
 static void add_typed_variable_list(Context *const context, TypedVariableList *const variable_list);
 static void add_variable(Context *const context, Variable *const variable, VariableType const type);
+static Variable *get_variable_from_variable_list(Context const *const context, char const *const name);
 
 static Value *eval_if(Context *const context, If const *const lang_if) {
 	d("eval_if");
@@ -562,6 +563,7 @@ void add_local_variable(Context *const context, Variable *const variable) {
 Variable *get_variable(Context const *const context, char const *const name) {
 	d("get_variable %s", name);
 	Context const *outer;
+	Variable *var;
 	FOR (outer, context, outer) {
 		VariableList *vl;
 		FOR (vl, outer->inner_variable_list, next) {
@@ -570,6 +572,20 @@ Variable *get_variable(Context const *const context, char const *const name) {
 			}
 		}
 	}
+	if (var = get_variable_from_variable_list(context, name)) {
+		return var;
+	}
+	switch (context->type) {
+	case IF_CONTEXT:
+	case FOR_CONTEXT:
+		if (context->outer) {
+			return get_variable_from_variable_list(context->outer, name);
+		}
+	}
+	return NULL;
+}
+
+static Variable *get_variable_from_variable_list(Context const *const context, char const *const name) {
 	if (context->variable_list) {
 		TypedVariableList *tvl;
 		for (tvl = context->variable_list; tvl; tvl = tvl->next) {
@@ -578,6 +594,7 @@ Variable *get_variable(Context const *const context, char const *const name) {
 			}
 		}
 	}
+
 	return NULL;
 }
 

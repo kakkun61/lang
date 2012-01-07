@@ -37,7 +37,9 @@ static void prepare_builtin_function(Context *const context) {
 void interpret(Script *script) {
 	d("interpret");
 	prepare_builtin_function(script->global_context);
-	eval(script->global_context, script->expression);
+	if (script->expression) {
+		eval(script->global_context, script->expression);
+	}
 }
 
 int compile(FILE *input) {

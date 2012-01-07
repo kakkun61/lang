@@ -79,8 +79,8 @@ root_expression:
 	block {
 		d("root_expression: block");
 		set_expression(get_compile_script(), $1);
-		// get_compile_script()->expression = $1;
-	};
+	}
+	| /* empty */;
 block:
 	expression_list DOT {
 		d("block: expression_list DOT");

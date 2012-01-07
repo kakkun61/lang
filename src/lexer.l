@@ -8,54 +8,60 @@ int yywrap(void) {
 	return 1;
 }
 %}
+
+%start COMMENT
+
 %%
-"+" return ADD_TOKEN;
-"-" return SUB_TOKEN;
-"*" return MUL_TOKEN;
-"/" return DIV_TOKEN;
-"%" return MOD_TOKEN;
-"(" return LP;
-")" return RP;
-"=" return ASSIGN_TOKEN;
-"," return COMMA;
-"." return DOT;
-";" return SEMICOLON;
-"==" return EQ;
-"!=" return NE;
-">=" return GE;
-">" return GR;
-"<=" return LE;
-"<" return LS;
-func return FUNC_TOKEN;
-self return SELF_TOKEN;
-outer return OUTER_TOKEN;
-inner return INNER_TOKEN;
-true return TRUE_TOKEN;
-false return FALSE_TOKEN;
-if return IF_TOKEN;
-else return ELSE_TOKEN;
-elif return ELIF_TOKEN;
-for return FOR_TOKEN;
-([1-9][0-9]*)|0 {
+<INITIAL>"+" return ADD_TOKEN;
+<INITIAL>"-" return SUB_TOKEN;
+<INITIAL>"*" return MUL_TOKEN;
+<INITIAL>"/" return DIV_TOKEN;
+<INITIAL>"%" return MOD_TOKEN;
+<INITIAL>"(" return LP;
+<INITIAL>")" return RP;
+<INITIAL>"=" return ASSIGN_TOKEN;
+<INITIAL>"," return COMMA;
+<INITIAL>"." return DOT;
+<INITIAL>";" return SEMICOLON;
+<INITIAL>"==" return EQ;
+<INITIAL>"!=" return NE;
+<INITIAL>">=" return GE;
+<INITIAL>">" return GR;
+<INITIAL>"<=" return LE;
+<INITIAL>"<" return LS;
+<INITIAL>func return FUNC_TOKEN;
+<INITIAL>self return SELF_TOKEN;
+<INITIAL>outer return OUTER_TOKEN;
+<INITIAL>inner return INNER_TOKEN;
+<INITIAL>true return TRUE_TOKEN;
+<INITIAL>false return FALSE_TOKEN;
+<INITIAL>if return IF_TOKEN;
+<INITIAL>else return ELSE_TOKEN;
+<INITIAL>elif return ELIF_TOKEN;
+<INITIAL>for return FOR_TOKEN;
+<INITIAL>([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);
 	yylval.integer = temp;
 	return INTEGER_LITERAL;
 }
-([1-9][0-9]*\.[0-9]+)|([0-9]\.[0-9]+) {
+<INITIAL>([1-9][0-9]*\.[0-9]+)|([0-9]\.[0-9]+) {
 	double temp;
 	sscanf(yytext, "%lf", &temp);
 	yylval.float_point = temp;
 	return FLOAT_POINT_LITERAL;
 }
-[A-Za-z_][A-Za-z_0-9]* {
+<INITIAL>[A-Za-z_][A-Za-z_0-9]* {
     yylval.identifier = create_identifier(yytext);
     return IDENTIFIER_TOKEN;
 }
-[ \t\n] ;
-. {
+<INITIAL>[ \t\n] ;
+<INITIAL>"//" BEGIN COMMENT;
+<INITIAL>. {
 	fprintf(stderr, "Lexical error: \"%s\"\n", yytext);
 	exit(1);
 }
+<COMMENT>\n BEGIN INITIAL;
+<COMMENT>. ;
 %%
 

@@ -1,0 +1,5 @@
+a = 1,
+if (true)
+	puts(a).,
+for (i = 0; i < 1; i = i + 1)
+	puts(a)..

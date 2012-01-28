@@ -9,7 +9,7 @@ int yywrap(void) {
 }
 %}
 
-%start COMMENT
+%start LINE_COMMENT BLOCK_COMMENT
 
 %%
 <INITIAL>"+" return ADD_TOKEN;
@@ -56,12 +56,15 @@ int yywrap(void) {
     return IDENTIFIER_TOKEN;
 }
 <INITIAL>[ \t\n] ;
-<INITIAL>"//" BEGIN COMMENT;
+<INITIAL>"//" BEGIN LINE_COMMENT;
+<INITIAL>"/*" BEGIN BLOCK_COMMENT;
 <INITIAL>. {
 	fprintf(stderr, "Lexical error: \"%s\"\n", yytext);
 	exit(1);
 }
-<COMMENT>\n BEGIN INITIAL;
-<COMMENT>. ;
+<LINE_COMMENT>\n BEGIN INITIAL;
+<LINE_COMMENT>. ;
+<BLOCK_COMMENT>"*/" BEGIN INITIAL;
+<BLOCK_COMMENT>. ;
 %%
 

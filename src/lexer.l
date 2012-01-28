@@ -51,7 +51,7 @@ int yywrap(void) {
 	yylval.float_point = temp;
 	return FLOAT_POINT_LITERAL;
 }
-<INITIAL>[A-Za-z_][A-Za-z_0-9]* {
+<INITIAL>[A-Za-z_][A-Za-z0-9_!?]* {
     yylval.identifier = create_identifier(yytext);
     return IDENTIFIER_TOKEN;
 }

@@ -32,6 +32,12 @@ static Value *eval_if(Context *const context, If const *const lang_if) {
 	exit(EXIT_FAILURE);
 }
 
+/**
+ * @param context    関数の評価された文脈
+ * @param expression 関数評価式
+ * @param name       関数を参照している変数の名前
+ * @param func       関数オブジェクト
+ */
 static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func) {
 	d("eval_foreign_function %s", name);
 	Context *fc;
@@ -47,11 +53,11 @@ static Value *eval_foreign_function(Context *const context, Expression const *co
 		var->value = eval(context, el->expression);
 		add_local_variable(fc, var);
 	}
-	if (pl) {
+	if (pl) { // パラメーター数 > アーギュメント数
 		fprintf(stderr, "fail to eval: too few parameters: %s\n", name);
 		exit(EXIT_FAILURE);
 	}
-	if (el) {
+	if (el) { // パラメーター数 < アーギュメント数
 		fprintf(stderr, "fail to eval: too few arguments: %s\n", name);
 		exit(EXIT_FAILURE);
 	}
@@ -78,6 +84,8 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 			}
 		#endif
 		val = eval(context, el->expression);
+		// TODO return, break, continue の判定
+		// TODO Value と制御構文のスーパークラスが必要
 		#ifdef DEBUG
 			value2string(str, sizeof(str) - 1, val);
 			d("=> %s", str);

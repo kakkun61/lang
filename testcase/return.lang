@@ -1,0 +1,7 @@
+f = func(arg)
+	if (arg < 5)
+		return arg.,
+	-arg.,
+
+for (i = 0; i < 10; i = i + 1)
+	puts(f(i))..

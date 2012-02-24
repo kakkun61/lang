@@ -39,6 +39,7 @@ int yywrap(void) {
 <INITIAL>else return ELSE_TOKEN;
 <INITIAL>elif return ELIF_TOKEN;
 <INITIAL>for return FOR_TOKEN;
+<INITIAL>"return" return RETURN_TOKEN;
 <INITIAL>([1-9][0-9]*)|0 {
 	int temp;
 	sscanf(yytext, "%d", &temp);

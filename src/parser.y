@@ -53,6 +53,7 @@ int yyerror(char const *str);
        ELSE_TOKEN
        ELIF_TOKEN
        FOR_TOKEN
+       RETURN_TOKEN
 %type <expression_list> expression_list
                         expression_list_or_empty
 %type <expression> expression
@@ -69,6 +70,7 @@ int yyerror(char const *str);
                    function_call_expression
                    if_expression
                    for_expression
+                   return_expression
 %type <identifier_list> identifier_list
 %type <lang_if> elif_list
                 else_kind
@@ -124,7 +126,8 @@ expression:
 	}
 	| function_definition_expression
 	| if_expression
-	| for_expression;
+	| for_expression
+	| return_expression;
 logical_or_expression:
 	logical_and_expression;
 logical_and_expression:
@@ -300,6 +303,10 @@ expression_list_or_empty:
 	expression_list
 	| /* empty */ {
 		$$ = NULL;
+	}
+return_expression:
+	RETURN_TOKEN expression {
+		// TODO
 	}
 %%
 int yyerror(char const *str) {

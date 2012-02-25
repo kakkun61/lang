@@ -3,6 +3,17 @@
 #include <stdlib.h>
 #include "ast.h"
 
+typedef enum {
+	RETURN_RETURN,
+	BREAK_RETURN,
+	CONTINUE_RETURN,
+} ReturnType;
+
+typedef struct {
+	ReturnType type;
+	Value value;
+} Return;
+
 #define SELF "self"
 
 void add_inner_variable(Context *const context,Variable *const variable);

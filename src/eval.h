@@ -16,3 +16,4 @@ Variable *get_variable(Context const *const context,char const *const name);
 Value *eval(Context *const context,Expression const *const expression);
 Value *create_native_function(Value *(*function)(Context *const,ValueList *const));
 Value *create_native_function(Value *(*function)(Context *const,ValueList *const));
+Return *create_return(ReturnType const type, Value const *const value); // TODO 実装

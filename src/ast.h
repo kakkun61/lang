@@ -34,6 +34,17 @@ typedef struct ValueList_tag {
 	struct ValueList_tag *next;
 } ValueList;
 
+typedef enum {
+	RETURN_RETURN,
+	BREAK_RETURN,
+	CONTINUE_RETURN,
+} ReturnType;
+
+typedef struct {
+	ReturnType type;
+	Value value;
+} Return;
+
 typedef struct {
 	char const *name;
 	Value *value;

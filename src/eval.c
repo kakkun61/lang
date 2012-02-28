@@ -619,3 +619,10 @@ Value *create_native_function(Value *(*function)(Context *const, ValueList *cons
 	val->u.function->u.native.function = function;
 	return val;
 }
+
+Return *create_return(ReturnType const type, Value const *const value) {
+	Return *rtn = malloc(sizeof(Return));
+	rtn->type = type;
+	rtn->value = value;
+	return rtn;
+}

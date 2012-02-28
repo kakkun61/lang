@@ -11,7 +11,7 @@ typedef enum {
 
 typedef struct {
 	ReturnType type;
-	Value value;
+	Value const *value;
 } Return;
 
 #define SELF "self"

@@ -306,6 +306,8 @@ Value *eval(Context *const context, Expression const *const expression) {
 				return RELEXP(<,left, right);
 			case LESS_EQUAL:
 				return RELEXP(<=,left, right);
+			default:
+				;// TODO エラー処理 不到達
 			}
 		}
 	case MINUS:
@@ -318,6 +320,8 @@ Value *eval(Context *const context, Expression const *const expression) {
 			case FLOAT:
 				operand->u.float_point *=-1;
 				return operand;
+			default:
+				;// TODO エラー処理 不到達
 			}
 		}
 	case ASSIGN:
@@ -580,12 +584,11 @@ Variable *get_variable(Context const *const context, char const *const name) {
 			}
 		}
 	}
-	if (var = get_variable_from_variable_list(context, name)) {
+	var = get_variable_from_variable_list(context, name);
+	if (var) {
 		return var;
 	}
-	switch (context->type) {
-	case IF_CONTEXT:
-	case FOR_CONTEXT:
+	if (context->type == IF_CONTEXT || context->type == FOR_CONTEXT) {
 		if (context->outer) {
 			return get_variable_from_variable_list(context->outer, name);
 		}

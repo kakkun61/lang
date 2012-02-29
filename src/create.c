@@ -118,6 +118,7 @@ char *create_identifier(char *identifier) {
 Expression *create_identifier_expression(char *identifier) {
 	Expression *expr = create_expression(IDENTIFIER);
 	expr->u.identifier = identifier;
+	return expr;
 }
 
 Expression *create_function_call_expression(char *identifier, ExpressionList *argument_list) {

@@ -1,23 +1,30 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include "eval.h"
 #include "ast.h"
 #include "list-util.h"
 #include "create.h"
 #include "debug.h"
 
-static Value *eval_if(Context *const context, If const *const lang_if);
-static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func);
-static Value *eval_expression_list(Context *const context, ExpressionList const *expression_list);
+static Return *eval_if(Context *const context, If const *const lang_if);
+static Return *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func);
+static Return *eval_expression_list(Context *const context, ExpressionList const *expression_list);
 static void add_typed_variable_list(Context *const context, TypedVariableList *const variable_list);
 static void add_variable(Context *const context, Variable *const variable, VariableType const type);
 static Variable *get_variable_from_variable_list(Context const *const context, char const *const name);
 
-static Value *eval_if(Context *const context, If const *const lang_if) {
+static Return *eval_if(Context *const context, If const *const lang_if) {
 	d("eval_if");
-	Value *val = NULL;
+	Value const *val = NULL;
 	if (lang_if->condition) {
-		val = eval(context, lang_if->condition);
+		Return *rtn;
+		rtn = eval(context, lang_if->condition);
+		if (rtn->type != NORMAL_RETURN) {
+			fprintf(stderr, "mustn't be reachable. must be normal return. (eval.c eval_if)\n");
+			exit(EXIT_FAILURE);
+		}
+		val = rtn->value;
 		if (val->type != BOOLEAN) {
 			fprintf(stderr, "a type of a condition of \"if\" must be boolean.\n");
 			exit(EXIT_FAILURE);
@@ -38,7 +45,7 @@ static Value *eval_if(Context *const context, If const *const lang_if) {
  * @param name       関数を参照している変数の名前
  * @param func       関数オブジェクト
  */
-static Value *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func) {
+static Return *eval_foreign_function(Context *const context, Expression const *const expression, char const *name, Function const *const func) {
 	d("eval_foreign_function %s", name);
 	Context *fc;
 	fc = create_context(FUNCTION_CONTEXT);
@@ -50,7 +57,12 @@ static Value *eval_foreign_function(Context *const context, Expression const *co
 		 pl && el;
 		 pl = pl->next, el = el->next) {
 		Variable *var = create_variable(pl->identifier);
-		var->value = eval(context, el->expression);
+		Return *rtn = eval(context, el->expression);
+		if (rtn->type != NORMAL_RETURN) {
+			fprintf(stderr, "mustn't be reachable. must be normal return. (eval.c eval_foreign_function)\n");
+			exit(EXIT_FAILURE);
+		}
+		var->value = rtn->value;
 		add_local_variable(fc, var);
 	}
 	if (pl) { // パラメーター数 > アーギュメント数
@@ -64,9 +76,10 @@ static Value *eval_foreign_function(Context *const context, Expression const *co
 	return eval(fc, func->u.foreign.expression);
 }
 
-static Value *eval_expression_list(Context *const context, ExpressionList const *expression_list) {
+static Return *eval_expression_list(Context *const context, ExpressionList const *expression_list) {
 	ExpressionList const *el;
-	Value *val = NULL;
+	Return *rtn = NULL;
+	bool break_flag = false;
 	#ifdef DEBUG
 		char str[80];
 	#endif
@@ -83,15 +96,46 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 				exit(1);
 			}
 		#endif
-		val = eval(context, el->expression);
+		rtn = eval(context, el->expression);
+		switch (rtn->type) {
+		case NORMAL_RETURN:
+			break;
+		case RETURN_RETURN:
+		case BREAK_RETURN:
+		case CONTINUE_RETURN:
+			break_flag = true;
+			break;
+		}
 		// TODO return, break, continue の判定
 		// TODO Value と制御構文のスーパークラスが必要
 		#ifdef DEBUG
-			value2string(str, sizeof(str) - 1, val);
+			switch (rtn->type) {
+			case NORMAL_RETURN:
+			case RETURN_RETURN:
+				value2string(str, sizeof(str) - 1, rtn->value);
+				#pragma GCC diagnostic ignored "-Wswitch"
+				switch (rtn->type) {
+				case NORMAL_RETURN:
+					d("=> normal %s", str);
+					break;
+				case RETURN_RETURN:
+					d("=> return %s", str);
+					break;
+				}
+				#pragma GCC diagnostic warning "-Wswitch"
+				break;
+			case BREAK_RETURN:
+				d("=> break");
+				break;
+			case CONTINUE_RETURN:
+				d("=> continue");
+				break;
+			}
 			d("=> %s", str);
 		#endif
+		if (break_flag) break;
 	}
-	return val;
+	return rtn;
 }
 
 #define ADDEXP(op, left, right)\
@@ -136,7 +180,7 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 			fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
 			exit(EXIT_FAILURE);\
 		}\
-		tmp;\
+		create_return(NORMAL_RETURN, tmp);\
 	})
 
 #define EQEXP(op, left, right)\
@@ -193,7 +237,7 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 			fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
 			exit(EXIT_FAILURE);\
 		}\
-		tmp;\
+		create_return(NORMAL_RETURN, tmp);\
 	})
 
 #define RELEXP(op, left, right)\
@@ -238,10 +282,10 @@ static Value *eval_expression_list(Context *const context, ExpressionList const 
 			fprintf(stderr, "failed to eval: bad value type for \"%s\": %d %d\n", #op, (left)->type, (right)->type);\
 			exit(EXIT_FAILURE);\
 		}\
-		tmp;\
+		create_return(NORMAL_RETURN, tmp);\
 	})
 
-Value *eval(Context *const context, Expression const *const expression) {
+Return *eval(Context *const context, Expression const *const expression) {
 	d("eval");
 	#ifdef TEST
 		if (!expression) {
@@ -257,7 +301,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 					&& expression->u.value->u.function->type == FOREIGN_FUNCTION) {
 				expression->u.value->u.function->u.foreign.context = context;
 			}
-			return expression->u.value;
+			return create_return(NORMAL_RETURN, expression->u.value);
 		}
 	case ADD:
 	case SUB:
@@ -273,9 +317,22 @@ Value *eval(Context *const context, Expression const *const expression) {
 		{
 			Value const *left;
 			Value const *right;
+			Return const *left_rtn;
+			Return const * right_rtn;
 			d("ADD | SUB | MUL | DIV | EQUAL | NOT_EQUAL | GRATER | GRATER_EQUAL | LESS | LESS_EQUAL");
-			left = eval(context, expression->u.pair->left);
-			right = eval(context, expression->u.pair->right);
+			left_rtn = eval(context, expression->u.pair->left);
+			if (left_rtn->type != NORMAL_RETURN) {
+				fprintf(stderr,"failed to eval: bad return type of left operand: %d\n", left_rtn->type);
+				exit(EXIT_FAILURE);
+			}
+			left = left_rtn->value;
+			right_rtn = eval(context, expression->u.pair->right);
+			if (right_rtn->type != NORMAL_RETURN) {
+				fprintf(stderr,"failed to eval: bad return type of right operand: %d\n", right_rtn->type);
+				exit(EXIT_FAILURE);
+			}
+			right = right_rtn->value;
+			#pragma GCC diagnostic ignored "-Wswitch"
 			switch (expression->type) {
 			case ADD:
 				return ADDEXP(+, left, right);
@@ -288,10 +345,10 @@ Value *eval(Context *const context, Expression const *const expression) {
 			case MOD:
 				{
 					if (left->type == INTEGER && right->type == INTEGER) {
-						return create_integer(left->u.integer % right->u.integer);
+						return create_return(NORMAL_RETURN, create_integer(left->u.integer % right->u.integer));
 					} else {
 						fprintf(stderr, "failed to eval: bad value type \"%%\": %d %d\n", (left)->type, (right)->type);
-						exit(EXIT_FAILURE);\
+						exit(EXIT_FAILURE);
 					}
 				}
 			case EQUAL:
@@ -306,28 +363,34 @@ Value *eval(Context *const context, Expression const *const expression) {
 				return RELEXP(<,left, right);
 			case LESS_EQUAL:
 				return RELEXP(<=,left, right);
-			default:
-				;// TODO エラー処理 不到達
 			}
+			#pragma GCC diagnostic warning "-Wswitch"
 		}
 	case MINUS:
 		{
-			Value *const operand = eval(context, expression->u.expression);
-			switch (operand->type) {
+			Return *operand_rtn;
+			operand_rtn = eval(context, expression->u.expression);
+			if (operand_rtn->type != NORMAL_RETURN) {
+				fprintf(stderr, "failed to eval: bad return type \"unary minus\": %d\n", operand_rtn->type);
+				exit(EXIT_FAILURE);
+			}
+			switch (operand_rtn->value->type) {
 			case INTEGER:
-				operand->u.integer *=-1;
-				return operand;
+				operand_rtn->value->u.integer *=-1;
+				return operand_rtn;
 			case FLOAT:
-				operand->u.float_point *=-1;
-				return operand;
+				operand_rtn->value->u.float_point *=-1;
+				return operand_rtn;
 			default:
-				;// TODO エラー処理 不到達
+				fprintf(stderr, "failed to eval: bad value type \"unary minus\": %d\n", operand_rtn->value->type);
+				exit(EXIT_FAILURE);
 			}
 		}
 	case ASSIGN:
 		{
 			char const *name;
 			Variable *var;
+			Return *val_rtn;
 			d("ASSIGN");
 			name = expression->u.assign->identifier;
 			var = get_variable(context, name);
@@ -335,8 +398,13 @@ Value *eval(Context *const context, Expression const *const expression) {
 				var = create_variable(name);
 				add_local_variable(context, var);
 			}
-			var->value = eval(context, expression->u.assign->operand);
-			return var->value;
+			val_rtn = eval(context, expression->u.assign->operand);
+			if (val_rtn->type != NORMAL_RETURN) {
+				fprintf(stderr, "failed to eval: bad return type \"assign\": %d\n", val_rtn->type);
+				exit(EXIT_FAILURE);
+			}
+			var->value = val_rtn->value;
+			return val_rtn;
 		}
 	case IDENTIFIER:
 		{
@@ -344,7 +412,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 			d("IDENTIFIER");
 			var = get_variable(context, expression->u.identifier);
 			if (var) {
-				return var->value;
+				return create_return(NORMAL_RETURN, var->value);
 			} else {
 				fprintf(stderr, "fail to eval: no such variable: %s\n", expression->u.identifier);
 				exit(1);
@@ -373,15 +441,26 @@ Value *eval(Context *const context, Expression const *const expression) {
 							Context *const fc = create_context(FUNCTION_CONTEXT);
 							ValueList *vl, *vh;
 							ExpressionList const *el;
+							Return const *val_rtn;
 							el = expression->u.function_call->argument_list;
 							if (el) {
-								vh = vl = create_value_list(eval(context, el->expression));
+								val_rtn = eval(context, el->expression);
+								if (val_rtn->type != NORMAL_RETURN) {
+									fprintf(stderr, "failed to eval: bad return type \"argument of function call\": %d\n", val_rtn->type);
+									exit(EXIT_FAILURE);
+								}
+								vh = vl = create_value_list(val_rtn->value);
 								el = el->next;
 							}
 							for (; el; el = el->next, vl = vl->next) {
-								vl->next = create_value_list(eval(context, el->expression));
+								val_rtn = eval(context, el->expression);
+								if (val_rtn->type != NORMAL_RETURN) {
+									fprintf(stderr, "failed to eval: bad return type \"argument of function call\": %d\n", val_rtn->type);
+									exit(EXIT_FAILURE);
+								}
+								vl->next = create_value_list(val_rtn->value);
 							}
-							return func->u.native.function(fc, vh);
+							return create_return(NORMAL_RETURN, func->u.native.function(fc, vh));
 						} else {
 							fprintf(stderr, "fail to eval: bad function type: %d\n", expression->type);
 							exit(1);
@@ -398,7 +477,7 @@ Value *eval(Context *const context, Expression const *const expression) {
 			d("OUTER");
 			var = add_outer_variable(context, expression->u.identifier);
 			if (var) {
-				return var->value;
+				return create_return(NORMAL_RETURN, var->value);
 			} else {
 				fprintf(stderr, "fail to eval: no such outer variable: %s\n", expression->u.identifier);
 				exit(EXIT_FAILURE);
@@ -407,9 +486,15 @@ Value *eval(Context *const context, Expression const *const expression) {
 	case INNER_ASSIGN:
 		{
 			Variable *var = create_variable(expression->u.assign->identifier);
+			Return *rtn;
 			add_inner_variable(context, var);
-			var->value = eval(context, expression->u.assign->operand);
-			return var->value;
+			rtn = eval(context, expression->u.assign->operand);
+			if (rtn->type != NORMAL_RETURN) {
+				fprintf(stderr, "failed to eval: bad return type \"inner assign\": %d\n", rtn->type);
+				exit(EXIT_FAILURE);
+			}
+			var->value = rtn->value;
+			return rtn;
 		}
 	case IF:
 		{
@@ -419,30 +504,34 @@ Value *eval(Context *const context, Expression const *const expression) {
 	case FOR:
 		{
 			d("FOR");
-			Value *cond;
-			Value *result;
+			Return *cond_rtn;
+			Return *result_rtn;
 			if (expression->u.lang_for->initialization) {
 				eval_expression_list(context, expression->u.lang_for->initialization);
 			}
 			while (true) {
 				if (expression->u.lang_for->condition) {
-					cond = eval_expression_list(context, expression->u.lang_for->condition);
-					if (cond->type != BOOLEAN) {
+					cond_rtn = eval_expression_list(context, expression->u.lang_for->condition);
+					if (cond_rtn->type != NORMAL_RETURN) {
+						fprintf(stderr, "failed to eval: bad return type \"condition of for\": %d\n", cond_rtn->type);
+						exit(EXIT_FAILURE);
+					}
+					if (cond_rtn->value->type != BOOLEAN) {
 						fprintf(stderr, "a value of a condition of \"for\" expression must be boolean.\n");
 						exit(EXIT_FAILURE);
 					}
-					if (!cond->u.boolean) {
+					if (!cond_rtn->value->u.boolean) {
 						break;
 					}
 				}
-				result = eval(context, expression->u.lang_for->body);
+				result_rtn = eval(context, expression->u.lang_for->body);
 				// TODO break, continue の処理
 		
 				if (expression->u.lang_for->step) {
 					eval_expression_list(context, expression->u.lang_for->step);
 				}
 			}
-			return result;
+			return result_rtn;
 		}
 	default:
 		fprintf(stderr, "fail to eval: bad expression type: %d\n", expression->type);
@@ -623,7 +712,7 @@ Value *create_native_function(Value *(*function)(Context *const, ValueList *cons
 	return val;
 }
 
-Return *create_return(ReturnType const type, Value const *const value) {
+Return *create_return(ReturnType const type, Value *const value) {
 	Return *rtn = malloc(sizeof(Return));
 	rtn->type = type;
 	rtn->value = value;

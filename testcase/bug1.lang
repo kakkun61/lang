@@ -1,0 +1,7 @@
+f = func(arg)
+	-arg.,
+one = 1,
+puts(one),    // =>  1
+puts(f(one)), // => -1
+puts(one).    // =>  1 truely
+              // => -1 really

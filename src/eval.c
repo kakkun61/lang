@@ -369,6 +369,7 @@ Return *eval(Context *const context, Expression const *const expression) {
 	case MINUS:
 		{
 			Return *operand_rtn;
+			Value *val;
 			operand_rtn = eval(context, expression->u.expression);
 			if (operand_rtn->type != NORMAL_RETURN) {
 				fprintf(stderr, "failed to eval: bad return type \"unary minus\": %d\n", operand_rtn->type);
@@ -376,15 +377,16 @@ Return *eval(Context *const context, Expression const *const expression) {
 			}
 			switch (operand_rtn->value->type) {
 			case INTEGER:
-				operand_rtn->value->u.integer *=-1;
-				return operand_rtn;
+				val = create_integer(operand_rtn->value->u.integer * -1);
+				break;
 			case FLOAT:
-				operand_rtn->value->u.float_point *=-1;
-				return operand_rtn;
+				val = create_float_point(operand_rtn->value->u.float_point * -1);
+				break;
 			default:
 				fprintf(stderr, "failed to eval: bad value type \"unary minus\": %d\n", operand_rtn->value->type);
 				exit(EXIT_FAILURE);
 			}
+			return create_return(NORMAL_RETURN, val);
 		}
 	case ASSIGN:
 		{

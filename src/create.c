@@ -217,3 +217,6 @@ Expression *create_for_expression(ExpressionList const *const initialization, Ex
 	return expr;
 }
 
+Expression *create_return_expression(Expression const *expression) {
+	
+}

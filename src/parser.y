@@ -307,6 +307,8 @@ expression_list_or_empty:
 return_expression:
 	RETURN_TOKEN expression {
 		// TODO
+		d("return_expression: RETURN_TOKEN expression");
+		$$ = create_return_expression($2);
 	}
 %%
 int yyerror(char const *str) {

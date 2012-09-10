@@ -30,3 +30,4 @@ Expression *create_expression(ExpressionType type);
 Function *create_function(FunctionType type);
 Expression *create_minus_expression(Expression const *operand);
 Expression *create_for_expression(ExpressionList const *const initialization, ExpressionList const *const condition, ExpressionList const *const step, Expression const *const body);
+Expression *create_return_expression(Expression const *expression);
